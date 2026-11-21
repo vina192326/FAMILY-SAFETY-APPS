@@ -65,6 +65,8 @@ private fun familyBasicAuth() = Base64.getEncoder().encodeToString("${familyEnv(
 @Serializable data class CreateOrderResponse(val orderId: String, val gatewayOrderId: String, val amountPaise: Long, val currency: String, val keyId: String)
 @Serializable data class VerifyPaymentRequest(val orderId: String, val gatewayPaymentId: String, val gatewaySignature: String)
 @Serializable data class VerifyPaymentResponse(val status: String, val permitCode: String, val expiresAt: String, val kidsDeviceId: String)
+@Serializable data class ParentDeviceSummary(val kidsDeviceId: String, val permitCode: String, val planName: String, val expiresAt: String, val bindingStatus: String)
+@Serializable data class ParentPurchaseSummary(val orderId: String, val planName: String, val amountPaise: Long, val currency: String, val paymentStatus: String, val permitCode: String?, val createdAt: String)
 @Serializable data class FamilyError(val error: String)
 
 private fun io.ktor.server.application.ApplicationCall.deviceId(role: String): UUID? {
@@ -274,6 +276,36 @@ fun Route.familyApiRoutes() {
                 } catch (e: Exception) { c.rollback(); throw e } finally { c.autoCommit = true }
             }
             call.respond(result)
+        }
+
+        get("/parent/devices") {
+            val parentId = call.deviceId("PARENT") ?: return@get call.familyFail("DEVICE_AUTH_REQUIRED", HttpStatusCode.Unauthorized)
+            val devices = familyDb.connection.use { c ->
+                c.prepareStatement("SELECT b.kids_device_id,p.public_code,s.name,p.expires_at,CASE WHEN b.revoked_at IS NOT NULL OR p.revoked_at IS NOT NULL OR p.expires_at<=now() THEN 'INACTIVE' ELSE 'ACTIVE' END FROM device_bindings b JOIN permits p ON p.id=b.permit_id JOIN subscription_plans s ON s.id=p.plan_id WHERE b.parent_device_id=? ORDER BY b.created_at DESC").use { p ->
+                    p.setObject(1, parentId)
+                    p.executeQuery().use { r ->
+                        buildList {
+                            while (r.next()) add(ParentDeviceSummary(r.getObject(1).toString(), r.getString(2), r.getString(3), r.getObject(4).toString(), r.getString(5)))
+                        }
+                    }
+                }
+            }
+            call.respond(devices)
+        }
+
+        get("/parent/purchases") {
+            val parentId = call.deviceId("PARENT") ?: return@get call.familyFail("DEVICE_AUTH_REQUIRED", HttpStatusCode.Unauthorized)
+            val purchases = familyDb.connection.use { c ->
+                c.prepareStatement("SELECT o.id,s.name,o.amount_paise,o.currency,o.status,p.public_code,o.created_at FROM payment_orders o JOIN subscription_plans s ON s.id=o.plan_id LEFT JOIN permits p ON p.payment_order_id=o.id WHERE o.parent_device_id=? ORDER BY o.created_at DESC").use { p ->
+                    p.setObject(1, parentId)
+                    p.executeQuery().use { r ->
+                        buildList {
+                            while (r.next()) add(ParentPurchaseSummary(r.getObject(1).toString(), r.getString(2), r.getLong(3), r.getString(4), r.getString(5), r.getString(6), r.getObject(7).toString()))
+                        }
+                    }
+                }
+            }
+            call.respond(purchases)
         }
 
         post("/kids/reconnect") {
