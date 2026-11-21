@@ -7,7 +7,7 @@ The target product is one Android application with three separated experiences:
 
 ## Repository status
 
-The backend foundation is implemented in `backend/`:
+The backend foundation in `backend/` includes:
 - Parent/Kids device bootstrap and device-scoped bearer tokens.
 - Kids OTP creation/rotation; Parent OTP validation with attempt throttling.
 - Pairing-session-gated subscription plan catalogue.
@@ -16,18 +16,26 @@ The backend foundation is implemented in `backend/`:
 - Kids reconnect for an existing valid Permit without another OTP.
 - Parent linked-device and purchase history endpoints.
 - Owner password-only authentication with optional User ID, generic invalid-credential message, BCrypt password hashes, rate-limited login, short-lived sessions and password rotation.
+- Dynamic history retention foundation: offline retention window, immutable 24-hour timer after first Parent view, and Parent delete controls.
 
-Backend compilation has passed in GitHub Actions. See the workflow link in the repository Actions tab.
+The Android application module now exists in `app/`. It currently contains a Compose Parent navigation shell, no-login Parent device bootstrap, encrypted device token storage, linked-device/history API wiring, and a PDF-before-delete preference API switch. The screens and many controls are still starter/placeholder implementations, not a complete dashboard.
 
-## Critical remaining work before an APK can be called complete
+## Parent Mode — remaining work
 
-- Android application module and approved UI implementation are not yet in this repository.
-- The approved Stitch design package has been recovered from the user's ChatGPT Library and audited in `docs/STITCH_DESIGN_AUDIT.md` (386 archive entries, 119 HTML artifacts, 110 PNG renders, 18 primary inventory screens). Exact Android UI implementation and screen-by-screen validation remain pending.
-- Android Keystore integration, runtime permission flows, notification/accessibility/location handling (only if included in the approved design), and client API wiring.
-- Owner UI, concealed neutral entry, dashboard and password-change screen.
-- Razorpay webhook signature verification and idempotent event processing.
-- Real PostgreSQL deployment, configured plan catalogue, live payment credentials, HTTPS and secret management.
-- Automated migration runner, backend integration/security tests, emulator and physical Android device testing, release signing and APK artifact.
+See [Parent Mode implementation status](docs/PARENT_MODE_IMPLEMENTATION_STATUS.md) for the detailed screen/control checklist. Major outstanding items include:
+- Exact Stitch UI parity and full Child Profile CRUD.
+- Parent OTP → plan catalogue → Razorpay checkout → verified Permit flow.
+- Real map/location/safe-place/geofence and Ring/Pause/Locate/Nudge/Check-In commands.
+- Activity charts, app usage, screen-time limits, routines and pause-all controls.
+- Live alert/SOS pipeline, push notifications, severity and quiet-hours controls.
+- PDF/CSV generation, Downloads/Share Sheet and local cache expiry.
+- Persisted settings for guardian roles, timezone, routines, notifications, language/theme, permissions, updates, support, export, deletion and AI opt-out.
+- Native permission rationale/request flows and privacy/policy review.
+- Backend APIs, database migrations, push registration/event ingestion, automated tests and end-to-end integration.
+
+## Build and release status
+
+GitHub Actions is configured to assemble a debug APK and upload it as an artifact. A successful Android build has **not yet been verified** in this audit. The app API base URL is currently a placeholder (`https://api.example.invalid`); no production HTTPS backend, release signing key, release APK or Play-ready package is claimed.
 
 ## Security invariants
 
