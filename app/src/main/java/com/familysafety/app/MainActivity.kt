@@ -300,19 +300,45 @@ private fun SettingsPage(search: String, onSearch: (String) -> Unit, pdf: Boolea
 
 @Composable
 private fun DetailPage(page: String, onBack: () -> Unit, api: ParentApi, selectedDevice: String, pdfPreference: Boolean, onPdfPreference: (Boolean) -> Unit) {
+    var activePage by remember(page) { mutableStateOf(page) }
     var otp by remember { mutableStateOf("") }
+    var pairingSessionId by remember { mutableStateOf("") }
+    var planList by remember { mutableStateOf(JSONArray()) }
+    var selectedPlanId by remember { mutableStateOf("") }
+    var createdOrder by remember { mutableStateOf<JSONObject?>(null) }
     var records by remember { mutableStateOf(JSONArray()) }
     var loading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("This section is ready for its authenticated service integration.") }
     val scope = rememberCoroutineScope()
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { TextButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null); Text(" Back") } }
-        item { Text(page, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Ink) }
-        when (page) {
+        item { Text(activePage, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Ink) }
+        when (activePage) {
             "Pair Device" -> {
                 item { Text("Enter the 6-digit OTP shown in the Kids app. Plans are shown only after server verification.", color = Muted) }
                 item { OutlinedTextField(otp, { otp = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text("Kids OTP") }, singleLine = true) }
-                item { Button(onClick = { message = "OTP validation endpoint is available; pairing session + plans + checkout UI still need integration." }, enabled = otp.length == 6) { Text("Verify OTP") } }
+                item { Button(onClick = { scope.launch { loading = true; runCatching { val result = api.validatePairingOtp(otp); pairingSessionId = result.getString("pairingSessionId"); planList = api.plans(pairingSessionId); activePage = "Select Plan"; message = "Code verified. Select a plan for this Kids installation." }.onFailure { message = it.message ?: "Pairing verification failed" }; loading = false } }, enabled = otp.length == 6 && !loading) { Text(if (loading) "Verifying…" else "Verify OTP") } }
+            }
+            "Select Plan" -> {
+                item { Text("Choose one plan for this Kids installation. The server controls price, duration and eligibility.", color = Muted) }
+                items((0 until planList.length()).toList()) { i ->
+                    val plan = planList.optJSONObject(i) ?: JSONObject()
+                    val id = plan.optString("id")
+                    Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                        Row(Modifier.fillMaxWidth().clickable { selectedPlanId = id }.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(selected = selectedPlanId == id, onClick = { selectedPlanId = id })
+                            Column(Modifier.weight(1f)) {
+                                Text(plan.optString("name"), color = Ink, fontWeight = FontWeight.Bold)
+                                Text("${plan.optString("currency")} ${plan.optLong("amountPaise") / 100.0} • ${plan.optString("durationValue")} ${plan.optString("durationUnit")}", color = Muted, fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+                item { Button(enabled = selectedPlanId.isNotBlank() && !loading, onClick = { scope.launch { loading = true; runCatching { createdOrder = api.createPaymentOrder(selectedPlanId, pairingSessionId); message = "Order created. Payment capture and Permit activation are not yet integrated in this APK."; activePage = "Payment Order" }.onFailure { message = it.message ?: "Unable to create payment order" }; loading = false } }) { Text(if (loading) "Creating order…" else "Continue to payment") } }
+            }
+            "Payment Order" -> {
+                item { Text("Gateway order created; no payment is captured or Permit activated yet.", color = Muted) }
+                item { createdOrder?.let { order -> StatusCard("Payment pending", "Order ID: ${order.optString("orderId")}\nGateway order: ${order.optString("gatewayOrderId")}\nAmount: ${order.optLong("amountPaise") / 100.0} ${order.optString("currency")}\nKey ID: ${order.optString("keyId")}") } }
             }
             "History" -> {
                 item { Button(onClick = {
