@@ -325,6 +325,7 @@ private fun DetailPage(page: String, onBack: () -> Unit, api: ParentApi, selecte
     var createdOrder by remember { mutableStateOf<JSONObject?>(null) }
     var records by remember { mutableStateOf(JSONArray()) }
     var permissionRows by remember { mutableStateOf(JSONArray()) }
+    var telemetry by remember { mutableStateOf<JSONObject?>(null) }
     var loading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("This section is ready for its authenticated service integration.") }
     val scope = rememberCoroutineScope()
@@ -360,6 +361,15 @@ private fun DetailPage(page: String, onBack: () -> Unit, api: ParentApi, selecte
 Gateway order: ${order.optString("gatewayOrderId")}
 Amount: ${order.optLong("amountPaise") / 100.0} ${order.optString("currency")}
 Key ID: ${order.optString("keyId")}") } }
+            }
+            "Live Family Data" -> {
+                item { Button(onClick = { scope.launch { loading = true; runCatching { telemetry = api.liveTelemetry(selectedDevice); message = "Latest Kids device snapshot loaded." }.onFailure { message = it.message ?: "No live data available" }; loading = false } }, enabled = selectedDevice.isNotBlank() && !loading) { Text(if (loading) "Refreshing…" else "Refresh live data") } }
+                item { telemetry?.let { live ->
+                    val payload = runCatching { JSONObject(live.optString("payloadJson")) }.getOrElse { JSONObject() }
+                    val captured = live.optString("capturedAt")
+                    StatusCard("Device snapshot", "Captured: $captured\nBattery: ${payload.optString("batteryPercent", "Not reported")}%\nCharging: ${payload.optString("charging", "Not reported")}\nNetwork: ${payload.optString("networkType", "Not reported")}\nForeground app: ${payload.optString("foregroundAppLabel", "Not reported")}\nLatitude: ${payload.optString("latitude", "Not reported")}\nLongitude: ${payload.optString("longitude", "Not reported")}")
+                } } }
+                item { StatusCard("Live data source", "This screen displays only the latest encrypted snapshot submitted by the linked Kids app. It does not generate or simulate location or app usage.") }
             }
             "Android Permission Health" -> {
                 item { Button(onClick = { scope.launch { loading = true; runCatching { permissionRows = api.permissionStatus(selectedDevice); message = "Permission snapshot refreshed from Kids device." }.onFailure { message = it.message ?: "Permission status unavailable" }; loading = false } }, enabled = selectedDevice.isNotBlank() && !loading) { Text(if (loading) "Loading…" else "Refresh permission status") } }
