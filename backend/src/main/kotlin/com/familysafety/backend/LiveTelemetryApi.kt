@@ -17,6 +17,8 @@ import kotlinx.serialization.json.doubleOrNull
 import java.security.SecureRandom
 import java.util.Base64
 import java.util.UUID
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -72,7 +74,7 @@ fun Route.liveTelemetryRoutes() {
                     VALUES(?,?,?,?,?) ON CONFLICT(kids_device_id) DO UPDATE SET parent_device_id=EXCLUDED.parent_device_id,
                     captured_at=EXCLUDED.captured_at,payload_iv=EXCLUDED.payload_iv,payload_ciphertext=EXCLUDED.payload_ciphertext,updated_at=now()
                     WHERE kids_live_telemetry.captured_at<=EXCLUDED.captured_at""").use { p ->
-                    p.setObject(1,kidsId); p.setObject(2,parentId); p.setObject(3,captured)
+                    p.setObject(1,kidsId); p.setObject(2,parentId); p.setObject(3,OffsetDateTime.ofInstant(captured, ZoneOffset.UTC))
                     p.setBytes(4,encrypted.first); p.setBytes(5,encrypted.second); p.executeUpdate()
                 }
             }
