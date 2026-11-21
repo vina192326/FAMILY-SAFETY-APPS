@@ -452,6 +452,7 @@ Longitude: ${payload.optString("longitude", "Not reported")}""")
 
 
 private fun buildHistoryPdf(context: android.content.Context, records: JSONArray): Uri {
+    check(Build.VERSION.SDK_INT >= 29) { "PDF export to Downloads requires Android 10 or later" }
     val pdf = PdfDocument()
     val text = Paint().apply { textSize = 10f; isAntiAlias = true }
     val title = Paint().apply { textSize = 16f; isFakeBoldText = true }
