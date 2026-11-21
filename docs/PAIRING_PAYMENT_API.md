@@ -14,13 +14,14 @@ All endpoints are versioned under `/v1`. Production traffic requires HTTPS.
 
 ## Payment and Permit
 - `POST /v1/parent/payments/verify` — accepts gateway order/payment IDs and gateway signature. Server verifies signature and independently checks the gateway payment record. Client assertion alone is ignored.
-- `POST /v1/webhooks/razorpay` — verifies webhook signature and processes captured/paid events idempotently.
+- Webhook callback processing is not implemented yet. Payment verification currently uses a server-verified Razorpay signature plus an independent server-to-server payment lookup.
 - A successful verification transaction creates one Permit and one binding. Unique constraints prevent one Permit from binding to multiple Kids devices.
-- `GET /v1/parent/devices` — lists devices already bound to this Parent installation.
+- `GET /v1/parent/devices` — lists devices and Permit/binding status for this Parent installation.
+- `GET /v1/parent/purchases` — returns payment and Permit history.
 - `POST /v1/kids/reconnect` — Kids device credential reconnects if its Permit and binding remain valid; OTP is not requested again.
 
 ## Owner
-- `POST /v1/private/session` — password + TOTP; returns short-lived Owner session.
+- `POST /v1/private/session` — password required, User ID optional; returns a short-lived Owner session. All failed credential combinations return the same generic error.
 - `/v1/private/**` — requires Owner session. Parent/Kids credentials are rejected.
 
 ## Error semantics
