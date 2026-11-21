@@ -5,6 +5,17 @@ import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.app.Service
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.IBinder
+import android.os.Looper
+import android.location.Location
+import android.location.LocationListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.net.ConnectivityManager
@@ -93,7 +104,7 @@ private val kidsPermissionSteps = listOf(
     KidsPermissionStep("FULL_SCREEN_INTENT", "Full-screen notifications", "Not requested. Safety notifications remain normal, visible Android notifications.", "skip")
 )
 
-private class KidsApi(private val context: Context) {
+internal class KidsApi(private val context: Context) {
     private val prefs = context.getSharedPreferences("family_kids", Context.MODE_PRIVATE)
     private val baseUrl = BuildConfig.API_BASE_URL.trimEnd('/')
 
@@ -264,8 +275,9 @@ private fun KidsModeScreen(api: KidsApi) {
     var message by remember { mutableStateOf("This Kids device shares only the safety information described in each step.") }
     var busy by remember { mutableStateOf(false) }
 
-    val runtimeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        message = if (granted) "Permission granted on this Kids device." else "Permission declined. You can continue without it."
+    val runtimeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        val granted = result.values.any { it }
+        message = if (granted) "Location/notification permission result saved on this Kids device." else "Permission declined. You can continue without it."
         refresh++
         scope.launch { runCatching { api.uploadPermissions(permissionSnapshot(context)) }.onFailure { error = it.message } }
     }
@@ -321,7 +333,7 @@ private fun KidsModeScreen(api: KidsApi) {
                                     "runtime" -> Button(onClick = {
                                         val permission = step.runtimePermission
                                         if (permission == null) { refresh++; stepIndex++; }
-                                        else runtimeLauncher.launch(permission)
+                                        else runtimeLauncher.launch(if (step.key == "LOCATION_FOREGROUND") arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION) else arrayOf(permission))
                                     }, modifier = Modifier.fillMaxWidth()) { Text("Allow on this device") }
                                     "background" -> Button(onClick = {
                                         if (Build.VERSION.SDK_INT >= 29) context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
@@ -344,6 +356,13 @@ private fun KidsModeScreen(api: KidsApi) {
                     item { Card { Column(Modifier.padding(16.dp)) { Text("Setup review complete", fontWeight = FontWeight.Bold); Text("You can revisit Android Settings at any time. Only enabled and supported permissions are reported to the linked Parent.") } } }
                 }
                 item {
+                    Button(enabled = ready && !busy && permissionGranted(context, "LOCATION_FOREGROUND"), onClick = {
+                        context.startForegroundService(Intent(context, KidsLocationShareService::class.java))
+                        message = "Live location sharing is ON. A visible Android notification remains while sharing is active."
+                    }, modifier = Modifier.fillMaxWidth()) { Text("Start Live Location Sharing") }
+                    OutlinedButton(enabled = ready, onClick = { context.stopService(Intent(context, KidsLocationShareService::class.java)); message = "Live location sharing stopped." }, modifier = Modifier.fillMaxWidth()) { Text("Stop Live Location Sharing") }
+                }
+                item {
                     Button(enabled = ready && !busy, onClick = {
                         scope.launch {
                             busy = true
@@ -362,4 +381,76 @@ private fun KidsModeScreen(api: KidsApi) {
             }
         }
     }
+}
+
+
+class KidsLocationShareService : Service() {
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private lateinit var locationManager: LocationManager
+    private lateinit var api: KidsApi
+    private val listener = object : LocationListener {
+        override fun onLocationChanged(location: Location) {
+            serviceScope.launch {
+                runCatching {
+                    val payload = collectKidsTelemetry(this@KidsLocationShareService)
+                    payload.put("latitude", location.latitude)
+                    payload.put("longitude", location.longitude)
+                    payload.put("accuracyMeters", location.accuracy.toDouble())
+                    api.uploadTelemetry(Instant.now().toString(), payload)
+                    api.uploadPermissions(permissionSnapshot(this@KidsLocationShareService))
+                }
+            }
+        }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        api = KidsApi(this)
+        val channelId = "kids_location_sharing"
+        if (Build.VERSION.SDK_INT >= 26) {
+            val channel = NotificationChannel(channelId, "Family location sharing", NotificationManager.IMPORTANCE_LOW)
+            (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(channel)
+        }
+        val notification = if (Build.VERSION.SDK_INT >= 26) {
+            Notification.Builder(this, channelId)
+                .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+                .setContentTitle("Family Safety location sharing is active")
+                .setContentText("Your linked guardian can see the latest shared location. Tap Stop in Kids Mode to end sharing.")
+                .setOngoing(true).build()
+        } else {
+            @Suppress("DEPRECATION")
+            Notification.Builder(this)
+                .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+                .setContentTitle("Family Safety location sharing is active")
+                .setContentText("Open Kids Mode to stop sharing.")
+                .setOngoing(true).build()
+        }
+        startForeground(201, notification)
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        runCatching {
+            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 15000L, 10f, listener, Looper.getMainLooper())
+            }
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 15000L, 10f, listener, Looper.getMainLooper())
+            }
+        }.onFailure { stopSelf() }
+        return START_STICKY
+    }
+
+    override fun onDestroy() {
+        runCatching { locationManager.removeUpdates(listener) }
+        super.onDestroy()
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
 }
