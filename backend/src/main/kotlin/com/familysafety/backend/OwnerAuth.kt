@@ -59,6 +59,7 @@ fun initializeOwnerAuthentication() {
         .split(',')
         .map(String::trim)
         .filter { it.startsWith("$2a$") || it.startsWith("$2b$") || it.startsWith("$2y$") }
+        .map { if (it.startsWith("$2y$")) "$2a$" + it.substring(4) else it }
     ownerDb.connection.use { connection ->
         val count = connection.prepareStatement("SELECT count(*) FROM owner_passwords WHERE active=true")
             .use { statement -> statement.executeQuery().use { rows -> rows.next(); rows.getInt(1) } }
