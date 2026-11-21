@@ -6,7 +6,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
-import io.ktor.server.request.origin
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
@@ -83,7 +82,7 @@ fun Route.ownerAuthenticationRoutes() {
                 return@post
             }
 
-            val ipDigest = ownerSha(call.request.origin.remoteHost + ownerEnv("TOKEN_PEPPER"))
+            val ipDigest = ownerSha(call.request.local.remoteHost + ownerEnv("TOKEN_PEPPER"))
             val limited = ownerDb.connection.use { connection ->
                 connection.prepareStatement(
                     "SELECT count(*) FROM owner_login_attempts WHERE ip_hash=? AND attempted_at > now() - interval '15 minutes'"
