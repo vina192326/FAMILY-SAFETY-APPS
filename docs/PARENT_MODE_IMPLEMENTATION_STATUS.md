@@ -47,3 +47,11 @@ Do not declare Parent Mode complete until all Stitch Parent screens and all mapp
 ## Latest verified audit (21 Nov 2026)
 
 See `docs/PARENT_MODE_VERIFIED_AUDIT_2026-11-21.md` for the source-by-source Parent Mode status. The Android app remains a starter shell: bootstrap, device list, history read/delete and PDF preference are wired; pairing verification UI, plan/payment UI, alerts, telemetry dashboard, permissions, commands, exports and most settings are not implemented. The configured API URL is still `https://api.example.invalid`. The previous Android Actions run failed before compilation; workflow SDK setup was updated, but a successful rerun and APK artifact are not yet verified. Do not report Parent Mode complete.
+
+
+## Latest implementation update
+
+- Parent Android now calls the existing six-digit OTP validation endpoint, loads the pairing-session plan catalogue, and creates a payment order for the selected Kids installation.
+- Android API base URL is configurable through the Gradle property or environment variable `FAMILY_API_BASE_URL`; the fallback remains a non-routable placeholder until deployment config is supplied.
+- Payment SDK checkout, payment verification UI, Permit activation refresh, all Kids telemetry/permissions, commands, alert feeds, exports and most settings remain incomplete. The latest verified audit is `docs/PARENT_MODE_VERIFIED_AUDIT_2026-11-21.md`.
+- No successful post-change Android build or APK artifact has yet been verified.
