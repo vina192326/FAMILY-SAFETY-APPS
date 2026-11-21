@@ -33,7 +33,7 @@ fun Application.module() {
     initializeOwnerAuthentication()
     routing {
         familyApiRoutes()
-        historyApiRoutes()
+        historyApiRoutes()\n        liveTelemetryRoutes()
         ownerAuthenticationRoutes()
         get("/health") {
             call.respond(mapOf("status" to "ok"))
