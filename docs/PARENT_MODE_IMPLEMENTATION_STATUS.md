@@ -65,3 +65,12 @@ See `docs/PARENT_MODE_VERIFIED_AUDIT_2026-11-21.md` for the source-by-source Par
 - Backend history ingestion uses the selected 24h/168h unviewed retention value; first Parent view continues to set the separate immutable 24-hour deletion deadline. Apply migration V006 before deploying the updated backend.
 - Android backend URL is configurable with FAMILY_API_BASE_URL Gradle property/environment variable; the default remains a placeholder. A real HTTPS deployment is still required.
 - Build and integration tests have not yet been verified for these latest commits. Parent Mode remains incomplete.
+
+
+## Latest continuation
+
+- Parent has a Live Family Data page backed by GET /v1/parent/telemetry; encrypted Kids telemetry ingestion is available at POST /v1/kids/telemetry, and a Maps deep link opens Kids-reported GPS coordinates.
+- Permission Centre reads Kids-reported permission snapshots from GET /v1/parent/permissions; Kids uploads up to 20 supported permission states at POST /v1/kids/permissions.
+- Added migrations V007/V008, Kids-to-Parent data contract and backend build CI workflow. Migration V006 is required for selectable 24h/7d unviewed history retention.
+- Critical dependency: no Kids Android module/collector exists in this repository, so live data and permission rows cannot populate until Kids-side consented collection/upload is built.
+- Payment checkout/verification, FCM commands, alerts/SOS, exports, multi-parent and most settings remain incomplete. Latest changes have not yet passed a verified CI build/device test.
