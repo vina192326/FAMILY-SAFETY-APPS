@@ -11,7 +11,7 @@ This is a source-level audit of the current repository. It is not a device/emula
 
 ## Executive result
 
-**Parent Mode is NOT complete.** The current Android app is a Compose starter shell, not a fully functional Parent dashboard. The only verified end-to-end Android-to-backend calls in the inspected app source are Parent bootstrap, linked-device list, history read/delete and the PDF-before-delete preference. Most other visible controls navigate to generic placeholder pages.
+**Parent Mode is NOT complete.** The current Android app is a Compose starter shell, not a fully functional Parent dashboard. The verified Android-to-backend calls now include Parent bootstrap, linked-device list, history read/delete, PDF-before-delete preference, six-digit OTP validation, pairing-session plan catalogue and payment-order creation. Payment checkout, payment verification UI and Permit activation are still not completed in the Android app. Most other visible controls remain placeholders.
 
 ## Screen-by-screen findings
 
@@ -25,9 +25,9 @@ This is a source-level audit of the current repository. It is not a device/emula
 | Alerts | Empty state; no alert-feed API | MISSING |
 | Settings search | Filters static local settings list | UI ONLY |
 | PDF-before-delete switch | GET/PUT backend preference; state changes on user interaction | CONNECTED (preference only) |
-| Pair Device | 6-digit input UI; Verify OTP button only changes explanatory message | UI ONLY |
-| Plan selection | Not present in Android UI | MISSING |
-| UPI / QR / Razorpay checkout | Backend Razorpay order/verification foundation exists; no Android checkout UI | PARTIAL |
+| Pair Device | 6-digit input now calls `/v1/parent/pairing/validate` and loads plan catalogue after server verification | CONNECTED (build/runtime still pending) |
+| Plan selection | Server plan catalogue is now shown and selection creates a Razorpay order | PARTIAL; checkout and verification UI missing |
+| UPI / QR / Razorpay checkout | Android can create a Razorpay order; no SDK checkout or payment verification UI yet | PARTIAL |
 | Manual UTR reconciliation | No reviewed manual-payment workflow found | MISSING |
 | History read | Calls GET /v1/parent/history | CONNECTED |
 | History delete | Calls DELETE /v1/parent/history/{id} | CONNECTED |
