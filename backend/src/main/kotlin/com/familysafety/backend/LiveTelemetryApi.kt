@@ -9,6 +9,11 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.doubleOrNull
 import java.security.SecureRandom
 import java.util.Base64
 import java.util.UUID
@@ -18,6 +23,7 @@ import javax.crypto.spec.SecretKeySpec
 
 @Serializable data class KidsTelemetryRequest(val capturedAt: String, val payloadJson: String)
 private val telemetryRandom = SecureRandom()
+private val allowedTelemetryFields = setOf("latitude", "longitude", "accuracyMeters", "batteryPercent", "charging", "networkType", "foregroundAppLabel", "screenState", "locationPermission", "usageAccessPermission")
 private fun telemetryEncrypt(id: UUID, raw: ByteArray): Pair<ByteArray, ByteArray> {
     val key = Base64.getDecoder().decode(familyEnv("HISTORY_ENCRYPTION_KEY_BASE64"))
     require(key.size == 32)
@@ -41,6 +47,15 @@ fun Route.liveTelemetryRoutes() {
             val req = runCatching { call.receive<KidsTelemetryRequest>() }.getOrNull()
                 ?: return@post call.familyFail("TELEMETRY_INVALID")
             if (req.payloadJson.toByteArray().size !in 1..65536) return@post call.familyFail("TELEMETRY_SIZE_INVALID", HttpStatusCode.PayloadTooLarge)
+            val payload = runCatching { Json.parseToJsonElement(req.payloadJson).jsonObject }.getOrNull()
+                ?: return@post call.familyFail("TELEMETRY_JSON_INVALID")
+            if (payload.keys.any { it !in allowedTelemetryFields }) return@post call.familyFail("TELEMETRY_FIELD_NOT_ALLOWED")
+            val battery = runCatching { payload["batteryPercent"]?.jsonPrimitive?.intOrNull }.getOrNull()
+            if (battery != null && battery !in 0..100) return@post call.familyFail("BATTERY_VALUE_INVALID")
+            val latitude = runCatching { payload["latitude"]?.jsonPrimitive?.doubleOrNull }.getOrNull()
+            val longitude = runCatching { payload["longitude"]?.jsonPrimitive?.doubleOrNull }.getOrNull()
+            if (latitude != null && latitude !in -90.0..90.0) return@post call.familyFail("LATITUDE_INVALID")
+            if (longitude != null && longitude !in -180.0..180.0) return@post call.familyFail("LONGITUDE_INVALID")
             val captured = runCatching { java.time.Instant.parse(req.capturedAt) }.getOrNull()
                 ?: return@post call.familyFail("TELEMETRY_TIMESTAMP_INVALID")
             val parentId = familyDb.connection.use { c ->
