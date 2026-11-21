@@ -22,6 +22,7 @@ fun Application.module() {
     }
     initializeOwnerAuthentication()
     routing {
+        familyApiRoutes()
         ownerAuthenticationRoutes()
         get("/health") {
             call.respond(mapOf("status" to "ok"))
