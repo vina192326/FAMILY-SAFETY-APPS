@@ -38,7 +38,7 @@ This is not yet the complete Parent dashboard. The following are still required:
 - Android unit/UI tests, backend integration tests, emulator and physical-device tests, release signing, install/upgrade testing and production configuration.
 
 ## CI / release notes
-The Android build workflow was added and a GitHub Actions run was queued at commit time. A successful build has not yet been observed in this audit. The API base URL is currently a placeholder (`https://api.example.invalid`) and must be set to the deployed HTTPS backend before any end-to-end use. No release APK, signing key, production endpoint or Play-ready package is claimed.
+The Android build workflow is configured to assemble a debug APK and upload it as an artifact. The previously inspected run (44912002354) failed before compilation because the workflow invoked `sdkmanager` from PATH after SDK setup; the workflow was corrected in commits 0406796 and c73c181 to use the SDK's absolute path and avoid the invalid PATH invocation. A successful build of the corrected workflow has not yet been verified. The API base URL is currently a placeholder (`https://api.example.invalid`) and must be set to the deployed HTTPS backend before any end-to-end use. No release APK, signing key, production endpoint or Play-ready package is claimed.
 
 ## Acceptance gate
 Do not declare Parent Mode complete until all Stitch Parent screens and all mapped Parent controls have real behavior, all permissions are correctly requested and tested, API/database/payment flows pass integration tests, and the release APK passes emulator and physical-device end-to-end tests.
