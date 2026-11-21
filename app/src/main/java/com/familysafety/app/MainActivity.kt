@@ -279,7 +279,7 @@ private fun AlertsPage(onOpen: (String) -> Unit) {
 private fun SettingsPage(search: String, onSearch: (String) -> Unit, pdf: Boolean, retentionHours: Int, onPdf: (Boolean) -> Unit, onRetention: (Int) -> Unit, onOpen: (String) -> Unit) {
     val groups = listOf(
         "Account & Security" to listOf("Parent profile", "Active Sessions", "Security & Privacy"),
-        "Family & Guardians" to listOf("Managed Child Profiles", "Guardian Permissions", "Family Timezone"),
+        "Family & Guardians" to listOf("Managed Child Profiles", "Guardian Permissions", "Family Timezone", "Kids Mode Setup"),
         "Safety Policies & Routines" to listOf("Bedtime & School Routines", "Safe Geofences & Places", "Emergency SOS Escalation"),
         "Privacy, Data & Compliance" to listOf("Data Retention Schedule", "Save History as PDF Before Auto-Delete", "AI Insights Opt-Out", "Export Family Data", "Delete Account & Wipe Vault"),
         "Appearance & Language" to listOf("Language / भाषा", "App Theme"),
@@ -354,6 +354,10 @@ private fun DetailPage(page: String, onBack: () -> Unit, api: ParentApi, selecte
         item { TextButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null); Text(" Back") } }
         item { Text(activePage, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Ink) }
         when (activePage) {
+            "Kids Mode Setup" -> {
+                item { StatusCard("Kids device setup", "Open this screen on the child device. It creates a separate Kids device identity, generates the six-digit pairing code and guides the child through 20 transparent permission steps. Use one installation per child device.") }
+                item { Button(onClick = { context.startActivity(Intent(context, KidsModeActivity::class.java)) }) { Text("Open Kids Mode setup") } }
+            }
             "Child Profile" -> {
                 item { StatusCard("Linked Kids device", """Device ID: $selectedDevice
 Use the linked-device data reported by the Kids app. Permissions are requested on the Kids device.""") }
