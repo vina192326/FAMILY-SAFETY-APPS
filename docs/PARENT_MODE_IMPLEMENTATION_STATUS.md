@@ -27,7 +27,7 @@ This is not yet the complete Parent dashboard. The following are still required:
 - Exact visual parity with the Stitch renders (current Compose is a functional starter layout, not pixel-matched).
 - Real child profile CRUD and profile-specific settings.
 - Parent OTP validation -> plan selection -> Razorpay checkout -> verified Permit issuance flow in Android UI.
-- Devices: real diagnostics, ping, unlink/revoke, wearable pairing, integrity checks and battery optimization help.
+- Dedicated 20-row Permission Centre with real Kids-device permission snapshots, request/approval flow and Android Settings guidance; separate Family Data Dashboard for live/last-known/history feeds (see `docs/PARENT_PERMISSION_AND_LIVE_DATA_DASHBOARD.md`).\n- Devices: real diagnostics, ping, unlink/revoke, wearable pairing, integrity checks and battery optimization help.
 - Location map, live routes, geofence create/edit, safe places, check-in, ring/pause/nudge commands.
 - Activity charts, app usage and screen-time controls, routines, +15m bonus and pause-all endpoints.
 - Alert feed, SOS push delivery, severity filters, reminder, route tracking and quiet-hours configuration.
