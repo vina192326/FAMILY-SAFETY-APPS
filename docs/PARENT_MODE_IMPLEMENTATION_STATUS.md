@@ -101,3 +101,7 @@ See `docs/PARENT_MODE_VERIFIED_AUDIT_2026-11-21.md` for the source-by-source Par
 - Implement secure FCM/command delivery with visible child confirmation and acknowledgement; alerts/SOS, safe places/geofences, multi-parent approvals, auto-renew and remaining Settings.
 - Do not implement covert accessibility control, hidden sensors, arbitrary calls, silent DND/volume override or silent whole-phone lock.
 - No successful Android build, emulator test or physical-device end-to-end test has yet been verified for the combined app. APK is not yet release-ready.
+
+## Touch Control status
+
+Touch Control is **not implemented or enabled**. The consent-first safety boundary and proposed API contract are documented in `docs/TOUCH_CONTROL_IMPLEMENTATION_PLAN.md`. The current Kids permission wizard intentionally does not request Accessibility access. Parent/Kids session UI, backend request/command queue, authorization, audit logging, platform-policy review, and emulator/physical-device tests remain outstanding. Do not claim Tap/Swipe/Scroll remote control works until the acceptance gate in that document passes.
