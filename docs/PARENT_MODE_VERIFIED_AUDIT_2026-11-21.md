@@ -118,3 +118,17 @@ Do not implement covert Accessibility click/swipe control, hidden camera/microph
 - Telemetry ingestion now allowlists only location, accuracy, battery, charging, network type, foreground app label, screen state and permission-state fields; validates battery and coordinate ranges; rejects unrelated fields.
 
 These changes are source commits only. They have not been verified by a successful CI build or device test. The Kids-side collector remains absent, so live snapshots will not appear until it is implemented.
+
+
+## Kids Mode implementation added after the audit baseline
+
+- Added KidsModeActivity inside the same APK, with its own encrypted Android Keystore token and Kids device bootstrap.
+- Kids mode generates and displays a six-digit pairing OTP with expiry; Parent pairing UI consumes that code.
+- Added a one-button 20-step permission/capability wizard. It reports 20 states but requests only relevant permissions on the Kids device: foreground location (coarse/fine), notifications on Android 13+, optional Usage Access, optional background-location settings and optional battery settings. Unrelated high-risk permissions are explicitly skipped/not requested.
+- Added explicit Start/Stop Live Location Sharing using an Android foreground location service with an ongoing notification. When Android location providers deliver updates, the Kids app submits encrypted telemetry and LOCATION history. APP_USAGE history is optional and only sent when Usage Access is granted.
+- Kids permission snapshots are sent to the existing backend permission endpoint; Parent can read them from Permission Centre. Parent dashboard offers a Kids Mode entry and Settings setup shortcut.
+- Added required manifest declarations and a Kids implementation status/permission matrix document.
+
+## Kids/Parent completion status
+
+This is source implementation only. It is not a tested complete app. The foreground service and Kids source have not yet passed a successful Android build or physical-device test. Live telemetry/history requires a valid payment-backed Permit; no production backend URL, payment checkout/verification UI, offline retry queue, FCM command pipeline, alerts/SOS, safe places, multi-parent flow or complete remote-control system is verified. Android OS permissions must be granted on the Kids device by its user. See docs/KIDS_MODE_IMPLEMENTATION_STATUS.md for the 20-step matrix and safety limits.
