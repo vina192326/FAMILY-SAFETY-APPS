@@ -104,6 +104,19 @@ fun Route.familyApiRoutes() {
                 ?: return@post call.familyFail("OTP_INVALID", HttpStatusCode.Forbidden)
             if (!req.otp.matches(Regex("[0-9]{6}"))) return@post call.familyFail("OTP_INVALID", HttpStatusCode.Forbidden)
 
+            val tooManyAttempts = familyDb.connection.use { c ->
+                c.prepareStatement("SELECT count(*) FROM pairing_otp_attempts WHERE parent_device_id=? AND attempted_at>now()-interval '15 minutes'").use { p ->
+                    p.setObject(1, parentId)
+                    p.executeQuery().use { r -> r.next(); r.getInt(1) >= 10 }
+                }
+            }
+            if (tooManyAttempts) return@post call.familyFail("OTP_INVALID_OR_EXPIRED", HttpStatusCode.Forbidden)
+            familyDb.connection.use { c ->
+                c.prepareStatement("INSERT INTO pairing_otp_attempts(parent_device_id) VALUES(?)").use { p ->
+                    p.setObject(1, parentId); p.executeUpdate()
+                }
+            }
+
             val result = familyDb.connection.use { c ->
                 c.autoCommit = false
                 try {
