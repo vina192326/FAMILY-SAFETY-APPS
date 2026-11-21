@@ -74,3 +74,11 @@ See `docs/PARENT_MODE_VERIFIED_AUDIT_2026-11-21.md` for the source-by-source Par
 - Added migrations V007/V008, Kids-to-Parent data contract and backend build CI workflow. Migration V006 is required for selectable 24h/7d unviewed history retention.
 - Critical dependency: no Kids Android module/collector exists in this repository, so live data and permission rows cannot populate until Kids-side consented collection/upload is built.
 - Payment checkout/verification, FCM commands, alerts/SOS, exports, multi-parent and most settings remain incomplete. Latest changes have not yet passed a verified CI build/device test.
+
+
+## Latest Parent-side additions
+
+- History now supports PDF save to Downloads and system Sharesheet; PDF-before-delete preference triggers a save attempt after history is read. Android 10+ required for Downloads export.
+- Live Family Data polls the latest Kids snapshot every 15 seconds while open and displays fresh/stale status; Maps deep link uses reported coordinates.
+- Live telemetry payload fields are allowlisted and coordinate/battery values validated before encrypted storage.
+- Source code has not yet passed a verified CI build or device test. Kids-side collector, backend deployment and migrations remain necessary for actual data.
