@@ -1,6 +1,8 @@
 package com.familysafety.app
 
 import android.os.Bundle
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -17,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -329,6 +332,7 @@ private fun DetailPage(page: String, onBack: () -> Unit, api: ParentApi, selecte
     var loading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("This section is ready for its authenticated service integration.") }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { TextButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null); Text(" Back") } }
         item { Text(activePage, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Ink) }
@@ -374,13 +378,20 @@ Key ID: ${order.optString("keyId")}""") } }
                 item { telemetry?.let { live ->
                     val payload = runCatching { JSONObject(live.optString("payloadJson")) }.getOrElse { JSONObject() }
                     val captured = live.optString("capturedAt")
-                    StatusCard("Device snapshot", """Captured: $captured
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        StatusCard("Device snapshot", """Captured: $captured
 Battery: ${payload.optString("batteryPercent", "Not reported")}%
 Charging: ${payload.optString("charging", "Not reported")}
 Network: ${payload.optString("networkType", "Not reported")}
 Foreground app: ${payload.optString("foregroundAppLabel", "Not reported")}
 Latitude: ${payload.optString("latitude", "Not reported")}
 Longitude: ${payload.optString("longitude", "Not reported")}""")
+                        val lat = payload.optDouble("latitude", Double.NaN)
+                        val lon = payload.optDouble("longitude", Double.NaN)
+                        if (lat.isFinite() && lon.isFinite() && lat in -90.0..90.0 && lon in -180.0..180.0) {
+                            Button(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("geo:$lat,$lon?q=$lat,$lon"))) }) { Text("View location in Maps") }
+                        }
+                    }
                 } } }
                 item { StatusCard("Live data source", "This screen displays only the latest encrypted snapshot submitted by the linked Kids app. It does not generate or simulate location or app usage.") }
             }
