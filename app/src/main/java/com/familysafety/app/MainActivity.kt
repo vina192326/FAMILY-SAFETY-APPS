@@ -29,6 +29,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import java.time.Instant
+import java.time.Duration
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -339,6 +342,14 @@ private fun DetailPage(page: String, onBack: () -> Unit, api: ParentApi, selecte
     var message by remember { mutableStateOf("This section is ready for its authenticated service integration.") }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    LaunchedEffect(activePage, selectedDevice) {
+        if (activePage == "Live Family Data" && selectedDevice.isNotBlank()) {
+            while (true) {
+                runCatching { telemetry = api.liveTelemetry(selectedDevice) }
+                delay(15_000)
+            }
+        }
+    }
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { TextButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null); Text(" Back") } }
         item { Text(activePage, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Ink) }
@@ -384,8 +395,10 @@ Key ID: ${order.optString("keyId")}""") } }
                 item { telemetry?.let { live ->
                     val payload = runCatching { JSONObject(live.optString("payloadJson")) }.getOrElse { JSONObject() }
                     val captured = live.optString("capturedAt")
+                    val ageMinutes = runCatching { Duration.between(Instant.parse(captured), Instant.now()).toMinutes() }.getOrDefault(Long.MAX_VALUE)
+                    val freshness = if (ageMinutes <= 5) "FRESH • updated ${ageMinutes} min ago" else "STALE • last report ${ageMinutes} min ago"
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        StatusCard("Device snapshot", """Captured: $captured
+                        StatusCard("Device snapshot • $freshness", """Captured: $captured
 Battery: ${payload.optString("batteryPercent", "Not reported")}%
 Charging: ${payload.optString("charging", "Not reported")}
 Network: ${payload.optString("networkType", "Not reported")}
