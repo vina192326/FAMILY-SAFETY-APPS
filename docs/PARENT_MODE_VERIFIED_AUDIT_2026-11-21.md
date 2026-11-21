@@ -92,3 +92,20 @@ Do not implement covert Accessibility click/swipe control, hidden camera/microph
 - Backend history ingestion now reads the Parent retention setting (24 or 168 hours) for unviewed records. First Parent read still sets the immutable 24-hour delete deadline. Migration `V006__parent_history_retention_preference.sql` is required before deployment.
 - Android API URL can be supplied through `FAMILY_API_BASE_URL` Gradle property/environment variable; a real deployed HTTPS endpoint is still needed.
 - The latest source changes have not yet been validated by a successful Android or backend build. Do not treat this as a completed release.
+
+
+## Work committed in latest continuation
+
+- Added Kids permission snapshot ingestion and Parent read API for up to 20 documented Android permission states (migration V007).
+- Added encrypted latest Kids telemetry snapshot ingestion and Parent read API for battery/network/app label/location fields (migration V008). Parent screen displays only Kids-submitted data and can open reported GPS coordinates in the installed Maps app.
+- Added Parent Child Profile shortcuts to Live Family Data, Permission Centre and History.
+- Added Kids-to-Parent data contract and backend CI workflow.
+- Added 24h/7d history retention selector migration V006 in the previous pass.
+
+## Remaining blockers
+
+- No Kids Android module/collector exists in this repository. No device submits permission snapshots or live telemetry until Kids-side consent UX, Android permission prompts, location/usage/battery/network collection and authenticated upload are built.
+- FCM command delivery/acknowledgement and supported device controls are not implemented.
+- Payment SDK checkout, payment verification UI and Permit refresh are incomplete.
+- Alerts/SOS event feed, multi-parent guardians, PDF/CSV export and Sharesheet, automatic PDF generation, complete settings persistence, account deletion/revocation and full safe-wipe workflow remain incomplete.
+- No successful build or emulator/physical-device test has been verified after latest changes. Migrations V006–V008 must be applied before deploying corresponding APIs.
