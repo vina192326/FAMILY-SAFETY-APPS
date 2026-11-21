@@ -101,11 +101,8 @@ class ParentApi(private val context: Context) {
         JSONArray(request("/v1/parent/history?kidsDeviceId=$kidsDeviceId"))
     suspend fun deleteHistory(recordId: String): String =
         request("/v1/parent/history/$recordId", "DELETE")
-    suspend fun savePdfPreference(enabled: Boolean): Boolean {
-        val response = JSONObject(request("/v1/parent/history/preferences", "PUT",
-            JSONObject().put("savePdfBeforeDelete", enabled)))
-        return response.getBoolean("savePdfBeforeDelete")
-    }
-    suspend fun getPdfPreference(): Boolean =
-        JSONObject(request("/v1/parent/history/preferences")).optBoolean("savePdfBeforeDelete", false)
+    suspend fun saveHistoryPreferences(enabled: Boolean, retentionHours: Int): JSONObject =
+        JSONObject(request("/v1/parent/history/preferences", "PUT",
+            JSONObject().put("savePdfBeforeDelete", enabled).put("retentionHours", retentionHours)))
+    suspend fun historyPreferences(): JSONObject = JSONObject(request("/v1/parent/history/preferences"))
 }
