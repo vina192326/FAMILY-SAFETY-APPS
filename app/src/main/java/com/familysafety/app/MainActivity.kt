@@ -3,6 +3,12 @@ package com.familysafety.app
 import android.os.Bundle
 import android.content.Intent
 import android.net.Uri
+import android.content.ContentValues
+import android.graphics.Paint
+import android.graphics.pdf.PdfDocument
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -410,8 +416,18 @@ Longitude: ${payload.optString("longitude", "Not reported")}""")
             }
             "History" -> {
                 item { Button(onClick = {
-                    scope.launch { loading = true; runCatching { records = api.history(selectedDevice); message = "History loaded from server." }.onFailure { message = it.message ?: "History unavailable" }; loading = false }
+                    scope.launch { loading = true; runCatching {
+                        records = api.history(selectedDevice)
+                        if (pdfPreference && records.length() > 0) message = "History loaded. PDF saved: ${saveHistoryPdf(context, records)}"
+                        else message = "History loaded from server."
+                    }.onFailure { message = it.message ?: "History unavailable" }; loading = false }
                 }) { Text(if (loading) "Loading…" else "Load History") } }
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(enabled = records.length() > 0, onClick = { runCatching { message = "PDF saved: ${saveHistoryPdf(context, records)}" }.onFailure { message = it.message ?: "PDF export failed" } }) { Text("Save PDF") }
+                        OutlinedButton(enabled = records.length() > 0, onClick = { runCatching { shareHistoryPdf(context, records); message = "Share sheet opened." }.onFailure { message = it.message ?: "Share failed" } }) { Text("Share PDF") }
+                    }
+                }
                 item { Text("Data will auto-delete 24 hours after first view. Downloaded copies do not stop cloud deletion.", color = Muted, fontSize = 12.sp) }
                 items((0 until records.length()).toList()) { i ->
                     val r = records.optJSONObject(i) ?: JSONObject()
@@ -432,6 +448,61 @@ Longitude: ${payload.optString("longitude", "Not reported")}""")
         }
         item { Text(message, color = Muted, fontSize = 12.sp) }
     }
+}
+
+
+private fun buildHistoryPdf(context: android.content.Context, records: JSONArray): Uri {
+    val pdf = PdfDocument()
+    val text = Paint().apply { textSize = 10f; isAntiAlias = true }
+    val title = Paint().apply { textSize = 16f; isFakeBoldText = true }
+    var number = 1
+    var page = pdf.startPage(PdfDocument.PageInfo.Builder(595, 842, number).create())
+    var y = 42f
+    page.canvas.drawText("FAMILY SAFETY — HISTORY REPORT", 36f, y, title)
+    y += 28f
+    for (index in 0 until records.length()) {
+        val record = records.optJSONObject(index) ?: JSONObject()
+        val lines = listOf(
+            record.optString("recordType") + " | " + record.optString("occurredAt"),
+            "Record: " + record.optString("id"),
+            "Delete at: " + record.optString("deleteAt"),
+            record.optString("payloadJson").take(160)
+        )
+        if (y > 790f) {
+            pdf.finishPage(page)
+            number += 1
+            page = pdf.startPage(PdfDocument.PageInfo.Builder(595, 842, number).create())
+            y = 42f
+        }
+        lines.forEach { line -> page.canvas.drawText(line.take(105), 36f, y, text); y += 16f }
+        y += 8f
+    }
+    pdf.finishPage(page)
+    val filename = "FamilySafety-History-" + System.currentTimeMillis() + ".pdf"
+    val values = ContentValues().apply {
+        put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+        put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+        if (Build.VERSION.SDK_INT >= 29) put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/FamilySafety")
+    }
+    val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+        ?: run { pdf.close(); error("Unable to create PDF in Downloads") }
+    try {
+        context.contentResolver.openOutputStream(uri)?.use { pdf.writeTo(it) } ?: error("Unable to write PDF")
+    } finally { pdf.close() }
+    return uri
+}
+
+private fun saveHistoryPdf(context: android.content.Context, records: JSONArray): String =
+    buildHistoryPdf(context, records).lastPathSegment ?: "PDF saved in Downloads"
+
+private fun shareHistoryPdf(context: android.content.Context, records: JSONArray) {
+    val uri = buildHistoryPdf(context, records)
+    val send = Intent(Intent.ACTION_SEND).apply {
+        type = "application/pdf"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    context.startActivity(Intent.createChooser(send, "Share family history"))
 }
 
 @Composable
