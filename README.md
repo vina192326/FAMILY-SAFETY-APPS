@@ -22,7 +22,7 @@ Backend compilation has passed in GitHub Actions. See the workflow link in the r
 ## Critical remaining work before an APK can be called complete
 
 - Android application module and approved UI implementation are not yet in this repository.
-- The approved Parent/Kids/Owner screen design file has not been provided in this conversation/Library; exact UI preservation cannot be implemented without that source.
+- The approved Stitch design package has been recovered from the user's ChatGPT Library and audited in `docs/STITCH_DESIGN_AUDIT.md` (386 archive entries, 119 HTML artifacts, 110 PNG renders, 18 primary inventory screens). Exact Android UI implementation and screen-by-screen validation remain pending.
 - Android Keystore integration, runtime permission flows, notification/accessibility/location handling (only if included in the approved design), and client API wiring.
 - Owner UI, concealed neutral entry, dashboard and password-change screen.
 - Razorpay webhook signature verification and idempotent event processing.
