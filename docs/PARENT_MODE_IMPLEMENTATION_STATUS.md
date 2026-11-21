@@ -42,3 +42,8 @@ The Android build workflow is configured to assemble a debug APK and upload it a
 
 ## Acceptance gate
 Do not declare Parent Mode complete until all Stitch Parent screens and all mapped Parent controls have real behavior, all permissions are correctly requested and tested, API/database/payment flows pass integration tests, and the release APK passes emulator and physical-device end-to-end tests.
+
+
+## Latest verified audit (21 Nov 2026)
+
+See `docs/PARENT_MODE_VERIFIED_AUDIT_2026-11-21.md` for the source-by-source Parent Mode status. The Android app remains a starter shell: bootstrap, device list, history read/delete and PDF preference are wired; pairing verification UI, plan/payment UI, alerts, telemetry dashboard, permissions, commands, exports and most settings are not implemented. The configured API URL is still `https://api.example.invalid`. The previous Android Actions run failed before compilation; workflow SDK setup was updated, but a successful rerun and APK artifact are not yet verified. Do not report Parent Mode complete.
