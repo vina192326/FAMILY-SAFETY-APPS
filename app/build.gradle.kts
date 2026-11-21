@@ -13,7 +13,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
-        buildConfigField("String", "API_BASE_URL", "\"https://api.example.invalid\"")
+        val configuredApi = providers.gradleProperty("FAMILY_API_BASE_URL")\n            .orElse(providers.environmentVariable("FAMILY_API_BASE_URL"))\n            .orElse("https://api.example.invalid").get()\n        buildConfigField("String", "API_BASE_URL", "\"${configuredApi}\"")
     }
     buildFeatures { compose = true; buildConfig = true }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
