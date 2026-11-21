@@ -35,7 +35,7 @@ import javax.crypto.spec.SecretKeySpec
 private val familyRandom = SecureRandom()
 private val familyJson = Json { ignoreUnknownKeys = true }
 private val familyHttp = HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(8)).build()
-private val familyDb by lazy {
+internal val familyDb by lazy {
     HikariDataSource(HikariConfig().apply {
         jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:postgresql://localhost:5432/familysafety"
         username = System.getenv("DATABASE_USER") ?: "familysafety"
@@ -43,7 +43,7 @@ private val familyDb by lazy {
         maximumPoolSize = 8
     })
 }
-private fun familyEnv(k: String) = System.getenv(k).orEmpty()
+internal fun familyEnv(k: String) = System.getenv(k).orEmpty()
 private fun familySha(s: String) = MessageDigest.getInstance("SHA-256").digest(s.toByteArray()).joinToString("") { "%02x".format(it) }
 private fun familyToken() = ByteArray(32).also(familyRandom::nextBytes).let { Base64.getUrlEncoder().withoutPadding().encodeToString(it) }
 private fun familyOtp() = (100000 + familyRandom.nextInt(900000)).toString()
@@ -69,7 +69,7 @@ private fun familyBasicAuth() = Base64.getEncoder().encodeToString("${familyEnv(
 @Serializable data class ParentPurchaseSummary(val orderId: String, val planName: String, val amountPaise: Long, val currency: String, val paymentStatus: String, val permitCode: String?, val createdAt: String)
 @Serializable data class FamilyError(val error: String)
 
-private fun io.ktor.server.application.ApplicationCall.deviceId(role: String): UUID? {
+internal fun io.ktor.server.application.ApplicationCall.deviceId(role: String): UUID? {
     val raw = request.headers[HttpHeaders.Authorization]?.takeIf { it.startsWith("Bearer ") }?.removePrefix("Bearer ")?.trim() ?: return null
     return familyDb.connection.use { c ->
         c.prepareStatement("SELECT id FROM app_devices WHERE token_hash=? AND role=?").use { p ->
@@ -78,7 +78,7 @@ private fun io.ktor.server.application.ApplicationCall.deviceId(role: String): U
         }
     }
 }
-private suspend fun io.ktor.server.application.ApplicationCall.familyFail(message: String, status: HttpStatusCode = HttpStatusCode.BadRequest) {
+internal suspend fun io.ktor.server.application.ApplicationCall.familyFail(message: String, status: HttpStatusCode = HttpStatusCode.BadRequest) {
     respond(status, FamilyError(message))
 }
 
