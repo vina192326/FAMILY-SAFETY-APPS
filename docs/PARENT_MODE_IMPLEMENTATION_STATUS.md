@@ -26,18 +26,18 @@ Latest user requirements override the old source flow: Parent must open directly
 This is not yet the complete Parent dashboard. The following are still required:
 - Exact visual parity with the Stitch renders (current Compose is a functional starter layout, not pixel-matched).
 - Real child profile CRUD and profile-specific settings.
-- Parent OTP validation -> plan selection -> Razorpay checkout -> verified Permit issuance flow in Android UI.
+- Parent six-digit Kids code -> plan selection (10 minutes / 1 day / 1 month / Lifetime) -> verified payment/UTR reconciliation -> unique Permit flow in Android UI; support multiple Kids installations with separate purchase.
 - Dedicated 20-row Permission Centre with real Kids-device permission snapshots, request/approval flow and Android Settings guidance; separate Family Data Dashboard for live/last-known/history feeds (see `docs/PARENT_PERMISSION_AND_LIVE_DATA_DASHBOARD.md`).\n- Devices: real diagnostics, ping, unlink/revoke, wearable pairing, integrity checks and battery optimization help.
-- Location map, live routes, geofence create/edit, safe places, check-in, ring/pause/nudge commands.
+- Kids-originated live GPS/app-usage/device telemetry dashboard; safe places/check-ins; authenticated FCM command delivery and acknowledgements for supported visible Ring/Safety alert, Pause own feature, Locate request and Nudge. Unsupported stealth touch control, forced calls/speaker/volume/DND override and hidden recording are excluded.
 - Activity charts, app usage and screen-time controls, routines, +15m bonus and pause-all endpoints.
-- Alert feed, SOS push delivery, severity filters, reminder, route tracking and quiet-hours configuration.
+- Alert feed, SOS push delivery, severity filters, reminder, route tracking and safe quiet-notification configuration; no blanket notification interception or silent mode override.
 - PDF generation, CSV export, Android Downloads/Share Sheet, per-item download/share and background local-cache expiry.
-- Settings persistence and real APIs for guardian roles, timezone, routines, notifications, language/theme, permission health, updates, support/legal, data export, account deletion and AI opt-out.
+- Settings persistence and real APIs for guardian roles, timezone, routines, notifications, language/theme, permission health, updates, support/legal, data export, account deletion, opt-in UPI AutoPay mandate and multi-parent approval/roles.
 - Native permission rationale/request screens and policy review for every sensitive Android permission.
-- Backend APIs and database models for the above feature groups; push notification registration and event ingestion.
+- Backend APIs and database models for above feature groups; Kids-originated telemetry, FCM command/ack pipeline, manual payment reconciliation, UPI mandate support, multi-parent role authorization and emergency Permit/session revoke + server data deletion workflow.
 - Android unit/UI tests, backend integration tests, emulator and physical-device tests, release signing, install/upgrade testing and production configuration.
 
-## CI / release notes
+See also `docs/PARENT_MODE_CONSOLIDATED_FUNCTIONAL_REQUIREMENTS.md` for the latest consolidated Parent scope and platform/security boundaries.\n\n## CI / release notes
 The Android build workflow is configured to assemble a debug APK and upload it as an artifact. The previously inspected run (44912002354) failed before compilation because the workflow invoked `sdkmanager` from PATH after SDK setup; the workflow was corrected in commits 0406796 and c73c181 to use the SDK's absolute path and avoid the invalid PATH invocation. A successful build of the corrected workflow has not yet been verified. The API base URL is currently a placeholder (`https://api.example.invalid`) and must be set to the deployed HTTPS backend before any end-to-end use. No release APK, signing key, production endpoint or Play-ready package is claimed.
 
 ## Acceptance gate
