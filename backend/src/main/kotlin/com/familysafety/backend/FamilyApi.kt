@@ -68,6 +68,16 @@ private fun familyBasicAuth() = Base64.getEncoder().encodeToString("${familyEnv(
 @Serializable data class ParentDeviceSummary(val kidsDeviceId: String, val permitCode: String, val planName: String, val expiresAt: String, val bindingStatus: String)
 @Serializable data class ParentPurchaseSummary(val orderId: String, val planName: String, val amountPaise: Long, val currency: String, val paymentStatus: String, val permitCode: String?, val createdAt: String)
 @Serializable data class FamilyError(val error: String)
+@Serializable data class KidsPermissionItem(val key: String, val granted: Boolean, val required: Boolean = false, val detail: String? = null)
+@Serializable data class KidsPermissionSnapshotRequest(val permissions: List<KidsPermissionItem>)
+@Serializable data class ParentPermissionStatus(val key: String, val granted: Boolean, val required: Boolean, val detail: String? = null, val lastCheckedAt: String)
+private val supportedKidsPermissions = setOf(
+    "LOCATION_FOREGROUND", "LOCATION_BACKGROUND", "NOTIFICATIONS", "USAGE_ACCESS",
+    "ACCESSIBILITY_CONTROL", "CAMERA", "MICROPHONE", "CONTACTS", "CALL_LOGS",
+    "PHONE_STATE", "SMS", "PHOTOS_MEDIA", "FILES", "BLUETOOTH_NEARBY",
+    "WIFI_NETWORK_STATE", "BATTERY_OPTIMIZATION", "DISPLAY_OVER_APPS",
+    "DEVICE_ADMIN_LOCK", "EXACT_ALARMS", "FULL_SCREEN_INTENT"
+)
 
 internal fun io.ktor.server.application.ApplicationCall.deviceId(role: String): UUID? {
     val raw = request.headers[HttpHeaders.Authorization]?.takeIf { it.startsWith("Bearer ") }?.removePrefix("Bearer ")?.trim() ?: return null
@@ -86,6 +96,53 @@ fun Route.familyApiRoutes() {
     route("/v1") {
         post("/kids/bootstrap") { bootstrapFamilyDevice("KIDS") }
         post("/parent/bootstrap") { bootstrapFamilyDevice("PARENT") }
+
+
+        post("/kids/permissions") {
+            val kidsId = call.deviceId("KIDS") ?: return@post call.familyFail("DEVICE_AUTH_REQUIRED", HttpStatusCode.Unauthorized)
+            val req = runCatching { call.receive<KidsPermissionSnapshotRequest>() }.getOrNull()
+                ?: return@post call.familyFail("PERMISSION_SNAPSHOT_INVALID")
+            if (req.permissions.size > 20 || req.permissions.any { it.key !in supportedKidsPermissions || (it.detail?.length ?: 0) > 240 })
+                return@post call.familyFail("PERMISSION_SNAPSHOT_INVALID")
+            familyDb.connection.use { c ->
+                c.autoCommit = false
+                try {
+                    req.permissions.distinctBy { it.key }.forEach { item ->
+                        c.prepareStatement(
+                            """INSERT INTO kid_permission_status(kids_device_id,permission_key,granted,required,detail,last_checked_at)
+                               VALUES(?,?,?,?,?,now()) ON CONFLICT(kids_device_id,permission_key) DO UPDATE
+                               SET granted=EXCLUDED.granted,required=EXCLUDED.required,detail=EXCLUDED.detail,last_checked_at=now()"""
+                        ).use { p ->
+                            p.setObject(1,kidsId); p.setString(2,item.key); p.setBoolean(3,item.granted)
+                            p.setBoolean(4,item.required); p.setString(5,item.detail); p.executeUpdate()
+                        }
+                    }
+                    c.commit()
+                } catch (e: Exception) { c.rollback(); throw e } finally { c.autoCommit = true }
+            }
+            call.respond(mapOf("status" to "RECORDED", "count" to req.permissions.distinctBy { it.key }.size))
+        }
+
+        get("/parent/permissions") {
+            val parentId = call.deviceId("PARENT") ?: return@get call.familyFail("DEVICE_AUTH_REQUIRED", HttpStatusCode.Unauthorized)
+            val kidsId = call.request.queryParameters["kidsDeviceId"]?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+                ?: return@get call.familyFail("KIDS_DEVICE_ID_REQUIRED")
+            val allowed = familyDb.connection.use { c ->
+                c.prepareStatement("""SELECT 1 FROM device_bindings b JOIN permits p ON p.id=b.permit_id
+                    WHERE b.kids_device_id=? AND b.parent_device_id=? AND b.revoked_at IS NULL AND p.revoked_at IS NULL AND p.expires_at>now()""").use { p ->
+                    p.setObject(1,kidsId); p.setObject(2,parentId); p.executeQuery().use { it.next() }
+                }
+            }
+            if (!allowed) return@get call.familyFail("DEVICE_NOT_LINKED", HttpStatusCode.Forbidden)
+            val rows = familyDb.connection.use { c ->
+                c.prepareStatement("SELECT permission_key,granted,required,detail,last_checked_at FROM kid_permission_status WHERE kids_device_id=? ORDER BY permission_key").use { p ->
+                    p.setObject(1,kidsId); p.executeQuery().use { r ->
+                        buildList { while(r.next()) add(ParentPermissionStatus(r.getString(1),r.getBoolean(2),r.getBoolean(3),r.getString(4),r.getObject(5).toString())) }
+                    }
+                }
+            }
+            call.respond(rows)
+        }
 
         post("/kids/pairing-otp/rotate") {
             val kidsId = call.deviceId("KIDS") ?: return@post call.familyFail("DEVICE_AUTH_REQUIRED", HttpStatusCode.Unauthorized)
