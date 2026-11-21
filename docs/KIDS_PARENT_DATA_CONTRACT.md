@@ -5,24 +5,23 @@ The Parent app is a viewer/controller only. It does not request Kids location, u
 ## Kids telemetry upload
 
 Authenticated Kids device endpoint:
-
-- `POST /v1/kids/telemetry`
-- Header: `Authorization: Bearer <Kids device token>`
-- JSON: `{"capturedAt":"2026-11-21T10:00:00Z","payloadJson":"{...}" }`
+- POST /v1/kids/telemetry
+- Header: Authorization: Bearer <Kids device token>
+- JSON: {"capturedAt":"2026-11-21T10:00:00Z","payloadJson":"{...}"}
 - Maximum payload: 64 KiB.
 - Requires a valid, non-revoked, unexpired Permit binding.
-- Latest snapshot is encrypted with AES-256-GCM using `HISTORY_ENCRYPTION_KEY_BASE64`; database stores ciphertext only.
-- Parent reads its own linked device snapshot from `GET /v1/parent/telemetry?kidsDeviceId=<uuid>`.
+- Latest snapshot is encrypted with AES-256-GCM using HISTORY_ENCRYPTION_KEY_BASE64; database stores ciphertext only.
+- Parent reads its own linked device snapshot from GET /v1/parent/telemetry?kidsDeviceId=<uuid>.
 
-Suggested payload keys: `latitude`, `longitude`, `accuracyMeters`, `batteryPercent`, `charging`, `networkType`, `foregroundAppLabel`, `screenState`, `locationPermission`, `usageAccessPermission`. Upload only values the guardian and child have been clearly informed about and consented to. Do not include call content, messages, passwords, camera/microphone recordings or unrelated personal data.
+Suggested payload keys: latitude, longitude, accuracyMeters, batteryPercent, charging, networkType, foregroundAppLabel, screenState, locationPermission, usageAccessPermission. Upload only values the guardian and child have been clearly informed about and consented to. Do not include call content, messages, passwords, camera/microphone recordings or unrelated personal data.
 
-The Parent screen shows the snapshot capture time; it must be treated as stale when old. A map deep link opens the supplied coordinates in the device's installed map app. It is not a continuously streaming map until the Kids app uploads fresh snapshots.
+The Parent screen shows the snapshot capture time; it must be treated as stale when old. A map deep link opens supplied coordinates in the device's installed map app. It is not a continuously streaming map until the Kids app uploads fresh snapshots.
 
 ## Kids permission snapshot
 
-- `POST /v1/kids/permissions` with `{"permissions":[{"key":"LOCATION_FOREGROUND","granted":true,"required":true,"detail":"While-in-use"}]}`.
+- POST /v1/kids/permissions with {"permissions":[{"key":"LOCATION_FOREGROUND","granted":true,"required":true,"detail":"While-in-use"}]}.
 - Maximum 20 entries; only supported keys are accepted.
-- Parent reads `GET /v1/parent/permissions?kidsDeviceId=<uuid>`.
+- Parent reads GET /v1/parent/permissions?kidsDeviceId=<uuid>.
 - Supported keys: LOCATION_FOREGROUND, LOCATION_BACKGROUND, NOTIFICATIONS, USAGE_ACCESS, ACCESSIBILITY_CONTROL, CAMERA, MICROPHONE, CONTACTS, CALL_LOGS, PHONE_STATE, SMS, PHOTOS_MEDIA, FILES, BLUETOOTH_NEARBY, WIFI_NETWORK_STATE, BATTERY_OPTIMIZATION, DISPLAY_OVER_APPS, DEVICE_ADMIN_LOCK, EXACT_ALARMS, FULL_SCREEN_INTENT.
 - Permission grant prompts must happen on the Kids device through Android's official APIs. Parent cannot grant them remotely or silently.
 
