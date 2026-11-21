@@ -29,6 +29,12 @@ The Parent screen shows the snapshot capture time; it must be treated as stale w
 
 Apply Flyway migrations V006, V007 and V008 before deploying these APIs. Keep the history encryption key stable and secret; rotate only with an explicit re-encryption plan.
 
-## Not yet wired
+## Kids Android source now present
 
-The repository's current Android source is a Parent-mode module. It does not yet contain the Kids-side Android permission request screens, background location/usage collection, upload worker, consent UX or FCM receiver. Therefore the Parent permission and telemetry pages will correctly show no report until a compatible Kids app submits it. This contract is not evidence of live data availability.
+The single Android app module now includes a KidsModeActivity, a 20-step permission/capability wizard, separate Kids device bootstrap/token storage, six-digit OTP generation, permission snapshot upload, manual sync, and an explicit Start/Stop Live Location Sharing action. Live sharing runs in a visible Android location foreground service and submits telemetry plus LOCATION history; APP_USAGE history is sent only when Usage Access is granted.
+
+The Parent dashboard is still a viewer/controller. It does not collect the Kids phone's permissions or telemetry. The Kids uploader requires a valid active Permit binding for telemetry/history, so a successful OTP pairing without verified payment/Permit will not make live data appear.
+
+## Remaining integration gates
+
+The Kids collector is source-wired to the documented APIs, but has not been built or tested on a real Android device. There is no persistent offline retry queue yet. The app requires a deployed HTTPS backend, database migrations V006–V008, token and encryption secrets, and verified payment/Permit provisioning. FCM commands, acknowledgements, alerts/SOS and multi-parent remain unimplemented. This contract is not evidence of production live data availability.
