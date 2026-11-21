@@ -14,7 +14,7 @@ Requires JDK 17+, PostgreSQL 14+, and the schema migrations under `db/migration`
 
 ### Provisioning the initial Owner password set
 
-Set `OWNER_PASSWORD_HASHES` in the backend deployment secret manager to a comma-separated list of BCrypt hashes. The backend seeds them once only when no active Owner hashes exist. The source repository and APK must contain no plaintext Owner passwords or hashes. The three example strings previously shared in chat have been treated as compromised; choose fresh secrets before production and generate hashes locally using BCrypt. Never paste the plaintext values into GitHub.
+Migration `V003__seed_initial_owner_password_hashes.sql` seeds the three requested initial credentials as BCrypt cost-12 hashes directly into the backend Owner password table. No plaintext password is stored in the APK or Kotlin source. These credentials were publicly disclosed, so rotate them from the private Owner Dashboard after initial access. The password-change endpoint replaces all active hashes and revokes all Owner sessions. For a fresh production deployment, replace the initial hash migration with hashes generated for new private passwords.
 
 Optional `OWNER_USER_ID` enables the second login field. If it is blank, leave User ID empty; password-only login remains supported.
 
