@@ -175,6 +175,8 @@ internal class KidsApi(private val context: Context) {
     suspend fun uploadPermissions(rows: JSONArray): JSONObject = JSONObject(request("/v1/kids/permissions", "POST", JSONObject().put("permissions", rows)))
     suspend fun uploadTelemetry(capturedAt: String, payload: JSONObject): JSONObject =
         JSONObject(request("/v1/kids/telemetry", "POST", JSONObject().put("capturedAt", capturedAt).put("payloadJson", payload.toString())))
+    suspend fun uploadHistory(recordType: String, occurredAt: String, payload: JSONObject): JSONObject =
+        JSONObject(request("/v1/kids/history", "POST", JSONObject().put("recordType", recordType).put("occurredAt", occurredAt).put("payloadJson", payload.toString())))
     fun deviceId(): String = prefs.getString("device_id", "").orEmpty()
 }
 
