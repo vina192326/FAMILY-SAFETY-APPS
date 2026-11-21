@@ -183,8 +183,9 @@ private fun permissionGranted(context: Context, key: String): Boolean = when (ke
         context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
     "LOCATION_BACKGROUND" -> Build.VERSION.SDK_INT < 29 || context.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
     "NOTIFICATIONS" -> Build.VERSION.SDK_INT < 33 || context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-    "USAGE_ACCESS" -> (context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager)
-        .unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), context.packageName) == AppOpsManager.MODE_ALLOWED
+    "USAGE_ACCESS" -> @Suppress("DEPRECATION")
+        (context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager)
+            .checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), context.packageName) == AppOpsManager.MODE_ALLOWED
     "WIFI_NETWORK_STATE" -> true
     "BATTERY_OPTIMIZATION" -> if (Build.VERSION.SDK_INT >= 23) {
         val power = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
@@ -385,7 +386,8 @@ private fun KidsModeScreen(api: KidsApi) {
 
 
 class KidsLocationShareService : Service() {
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val serviceJob = SupervisorJob()
+    private val serviceScope = CoroutineScope(serviceJob + Dispatchers.IO)
     private lateinit var locationManager: LocationManager
     private lateinit var api: KidsApi
     private val listener = object : LocationListener {
@@ -449,6 +451,7 @@ class KidsLocationShareService : Service() {
 
     override fun onDestroy() {
         runCatching { locationManager.removeUpdates(listener) }
+        serviceJob.cancel()
         super.onDestroy()
     }
 
