@@ -344,8 +344,8 @@ private fun KidsModeScreen(api: KidsApi) {
                                     }, modifier = Modifier.fillMaxWidth()) { Text("Open Android permission settings") }
                                     "usage" -> Button(onClick = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }, modifier = Modifier.fillMaxWidth()) { Text("Open Usage Access settings") }
                                     "battery" -> Button(onClick = { context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }, modifier = Modifier.fillMaxWidth()) { Text("Review battery settings") }
-                                    "capability" -> Button(onClick = { refresh++; stepIndex++ }, modifier = Modifier.fillMaxWidth()) { Text("Continue") }
-                                    else -> Button(onClick = { refresh++; stepIndex++ }, modifier = Modifier.fillMaxWidth()) { Text("Skip — not needed") }
+                                    "capability" -> Button(onClick = { refresh++; message = "This is an Android system capability; no runtime permission prompt is needed." }, modifier = Modifier.fillMaxWidth()) { Text("Continue") }
+                                    else -> Button(onClick = { refresh++; message = "This access is not requested by the current Family Safety feature set." }, modifier = Modifier.fillMaxWidth()) { Text("Skip — not needed") }
                                 }
                                 OutlinedButton(onClick = {
                                     refresh++
@@ -405,6 +405,10 @@ class KidsLocationShareService : Service() {
                 }
             }
         }
+        @Suppress("DEPRECATION")
+        override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) = Unit
+        override fun onProviderEnabled(provider: String) = Unit
+        override fun onProviderDisabled(provider: String) = Unit
     }
 
     override fun onCreate() {
