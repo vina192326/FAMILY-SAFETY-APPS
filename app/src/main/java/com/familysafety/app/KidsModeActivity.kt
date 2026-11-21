@@ -433,7 +433,7 @@ class KidsLocationShareService : Service() {
             Notification.Builder(this, channelId)
                 .setSmallIcon(android.R.drawable.ic_menu_mylocation)
                 .setContentTitle("Family Safety location sharing is active")
-                .setContentText("Your linked guardian can see the latest shared location. Tap Stop in Kids Mode to end sharing.")
+                .setContentText("When paired and a valid Permit is active, your linked guardian can view the latest shared location. Open Kids Mode to stop sharing. Location is shared only with an active linked Permit.")
                 .setOngoing(true).build()
         } else {
             @Suppress("DEPRECATION")
