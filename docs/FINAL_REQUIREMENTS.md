@@ -39,7 +39,7 @@
 
 ## Owner access
 - Neutral entry only; no public Owner/Admin/Master Login labels.
-- Owner authentication is server-verified and protected with password plus TOTP; credentials and TOTP seed are deployment secrets.
+- Owner authentication is server-verified. Password is mandatory; User ID is optional. A correct configured Permanent Master Password alone may authenticate. Every failed credential combination returns exactly `Invalid User ID or Password.`. Password hashes are stored with BCrypt; plaintext passwords are never embedded in APK/source code.
 - Owner APIs require a separate short-lived Owner session and role checks. Parent/Kids tokens cannot call Owner endpoints.
 - Rate limit and audit failed/successful Owner authentication.
 
