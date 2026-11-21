@@ -85,7 +85,17 @@ class ParentApi(private val context: Context) {
         return response.getString("deviceId")
     }
 
-    suspend fun devices(): JSONArray = JSONArray(request("/v1/parent/devices"))
+    suspend fun devices(): JSONArray = JSONArray(request("/v1/parent/devices"))\n
+    suspend fun validatePairingOtp(otp: String): JSONObject =
+        JSONObject(request("/v1/parent/pairing/validate", "POST", JSONObject().put("otp", otp)))
+
+    suspend fun plans(pairingSessionId: String): JSONArray =
+        JSONArray(request("/v1/parent/plans?pairingSessionId=$pairingSessionId"))
+
+    suspend fun createPaymentOrder(planId: String, pairingSessionId: String): JSONObject =
+        JSONObject(request("/v1/parent/payments/orders", "POST",
+            JSONObject().put("planId", planId).put("pairingSessionId", pairingSessionId)))
+
     suspend fun history(kidsDeviceId: String): JSONArray =
         JSONArray(request("/v1/parent/history?kidsDeviceId=$kidsDeviceId"))
     suspend fun deleteHistory(recordId: String): String =
