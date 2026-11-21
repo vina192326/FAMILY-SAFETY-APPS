@@ -55,3 +55,13 @@ See `docs/PARENT_MODE_VERIFIED_AUDIT_2026-11-21.md` for the source-by-source Par
 - Android API base URL is configurable through the Gradle property or environment variable `FAMILY_API_BASE_URL`; the fallback remains a non-routable placeholder until deployment config is supplied.
 - Payment SDK checkout, payment verification UI, Permit activation refresh, all Kids telemetry/permissions, commands, alert feeds, exports and most settings remain incomplete. The latest verified audit is `docs/PARENT_MODE_VERIFIED_AUDIT_2026-11-21.md`.
 - No successful post-change Android build or APK artifact has yet been verified.
+
+
+## Parent Mode work committed in current implementation pass
+
+- Android Parent pairing now calls OTP validation, loads the server plan catalogue and creates a gateway order for the selected Kids installation. This is not full checkout: no payment SDK, UPI/QR/UTR reconciliation UI or verified-Permit completion UI is present yet.
+- Parent Home child-card History action now opens that child's history.
+- Parent Settings now provide 24-hour or 7-day unviewed retention and PDF-before-delete preference through the API.
+- Backend history ingestion uses the selected 24h/168h unviewed retention value; first Parent view continues to set the separate immutable 24-hour deletion deadline. Apply migration V006 before deploying the updated backend.
+- Android backend URL is configurable with FAMILY_API_BASE_URL Gradle property/environment variable; the default remains a placeholder. A real HTTPS deployment is still required.
+- Build and integration tests have not yet been verified for these latest commits. Parent Mode remains incomplete.
