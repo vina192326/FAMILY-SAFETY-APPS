@@ -97,7 +97,7 @@ class ParentApi(private val context: Context) {
         JSONObject(request("/v1/parent/payments/orders", "POST",
             JSONObject().put("planId", planId).put("pairingSessionId", pairingSessionId)))
 
-    suspend fun permissionStatus(kidsDeviceId: String): JSONArray =
+    suspend fun liveTelemetry(kidsDeviceId: String): JSONObject =\n        JSONObject(request("/v1/parent/telemetry?kidsDeviceId=$kidsDeviceId"))\n\n    suspend fun permissionStatus(kidsDeviceId: String): JSONArray =
         JSONArray(request("/v1/parent/permissions?kidsDeviceId=$kidsDeviceId"))
 
     suspend fun history(kidsDeviceId: String): JSONArray =
