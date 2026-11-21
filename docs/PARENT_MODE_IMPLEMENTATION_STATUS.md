@@ -82,3 +82,22 @@ See `docs/PARENT_MODE_VERIFIED_AUDIT_2026-11-21.md` for the source-by-source Par
 - Live Family Data polls the latest Kids snapshot every 15 seconds while open and displays fresh/stale status; Maps deep link uses reported coordinates.
 - Live telemetry payload fields are allowlisted and coordinate/battery values validated before encrypted storage.
 - Source code has not yet passed a verified CI build or device test. Kids-side collector, backend deployment and migrations remain necessary for actual data.
+
+
+## Kids Mode added in the same APK
+
+- A KidsModeActivity is now part of the same :app module. Parent dashboard has a Kids Mode entry; Settings also links to Kids Mode Setup.
+- Kids gets its own bootstrap device identity and Android Keystore-encrypted token; the Kids screen displays a six-digit OTP for Parent pairing.
+- One "Start Setup — 20 steps" button walks through 20 tracked permission/capability states. Only relevant Android permissions are prompted; unrelated/sensitive capabilities are explicitly skipped/not requested. Background location and Usage Access require separate user action in Android Settings.
+- Kids can manually sync permission status and telemetry. An explicit Start/Stop Live Location Sharing button starts/stops a visible foreground location service with an ongoing notification.
+- On location updates, Kids uploads the latest telemetry and LOCATION history; APP_USAGE history is conditional on the user granting Usage Access. Parent reads the latest snapshot and history from server APIs.
+- Data transfer requires an active valid Permit for telemetry/history. A valid pairing OTP alone does not activate data access.
+
+## Remaining joint Parent/Kids work
+
+- Finish and test Razorpay checkout, server payment verification UI and Permit activation/refresh.
+- Deploy production HTTPS backend; apply migrations V006–V008; configure database, token pepper, AES key and Razorpay secrets.
+- Add durable offline upload queue/retry and validate Android background location behavior across OEMs and Android versions.
+- Implement secure FCM/command delivery with visible child confirmation and acknowledgement; alerts/SOS, safe places/geofences, multi-parent approvals, auto-renew and remaining Settings.
+- Do not implement covert accessibility control, hidden sensors, arbitrary calls, silent DND/volume override or silent whole-phone lock.
+- No successful Android build, emulator test or physical-device end-to-end test has yet been verified for the combined app. APK is not yet release-ready.
