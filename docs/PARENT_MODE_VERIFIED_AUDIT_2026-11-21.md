@@ -84,3 +84,11 @@ app/build.gradle.kts currently hardcodes https://api.example.invalid as API_BASE
 ## Platform/security scope
 
 Do not implement covert Accessibility click/swipe control, hidden camera/microphone, call-log scraping, forced arbitrary calls, secret DND/volume overrides or silent full-device lock. Any supported command must be visible, consent-based, device-scoped, acknowledged and auditable. OS permission requests must be completed on the Kids device; a Parent request or FCM message cannot silently grant them.
+
+## Additional work in this continuation
+
+- Parent pairing UI now validates the 6-digit Kids code against the backend, fetches plans for the resulting pairing session, and creates a server-side Razorpay order for the selected plan. The app explicitly labels the order as pending; checkout, payment confirmation UI and Permit activation remain incomplete.
+- Parent Settings now expose 24-hour / 7-day unviewed-history retention and the PDF preference using the backend preference API.
+- Backend history ingestion now reads the Parent retention setting (24 or 168 hours) for unviewed records. First Parent read still sets the immutable 24-hour delete deadline. Migration `V006__parent_history_retention_preference.sql` is required before deployment.
+- Android API URL can be supplied through `FAMILY_API_BASE_URL` Gradle property/environment variable; a real deployed HTTPS endpoint is still needed.
+- The latest source changes have not yet been validated by a successful Android or backend build. Do not treat this as a completed release.
