@@ -1,26 +1,40 @@
-# FAMILY SAFETY — Single APK
+# FAMILY SAFETY — One Android APK
 
-A single Android application (`com.familysafety.app`) with three isolated experiences:
-- **Parent Mode** — direct dashboard access; no email, username, password or parent login.
-- **Kids Mode** — permanently free; no account or payment. Generates a short-lived pairing OTP.
-- **Private settings entry** — neutral public label; the private Owner console is shown only after server-verified Owner authentication. No public Owner/Admin/Master Login wording.
+The target product is one Android application with three separated experiences:
+- **Parent Mode** — direct Parent Dashboard; no account login.
+- **Kids Mode** — free to use, no subscription/payment; generates a temporary pairing OTP.
+- **Private settings entry** — neutral public label; Owner Dashboard is shown only after server-side Owner authentication.
 
-## Non-negotiable purchase and binding rules
-1. Each Kids installation has its own installation identity and requires its own Permit.
-2. A Parent enters the OTP currently displayed by the Kids installation. The backend validates it before exposing plans.
-3. The Parent chooses a plan with explicit duration, price, history-retention access and permissions.
-4. Payment must be verified by the configured payment gateway on the server. A client callback, screenshot, UPI intent result, UTR string or local "success" flag is never proof of payment.
-5. Only a verified/captured payment can create a unique Permit and activate the device binding.
-6. A still-valid binding reconnects using its device credential; it does not ask for another OTP.
-7. One Permit can bind to only one Kids device. Additional Kids installations need separate purchases and separate Permits.
+## Repository status
 
-## Repository layout
-- `android/` — one Android application module; Parent/Kids/Owner are in-app modes, not separate APKs.
-- `backend/` — Ktor API, PostgreSQL schema and payment-gateway integration.
-- `docs/` — API, security, release and test requirements.
+The backend foundation is implemented in `backend/`:
+- Parent/Kids device bootstrap and device-scoped bearer tokens.
+- Kids OTP creation/rotation; Parent OTP validation with attempt throttling.
+- Pairing-session-gated subscription plan catalogue.
+- Server-created Razorpay orders and server-side payment signature + payment-resource verification.
+- Unique Permit issuance and device binding in one PostgreSQL transaction after captured payment.
+- Kids reconnect for an existing valid Permit without another OTP.
+- Parent linked-device and purchase history endpoints.
+- Owner password-only authentication with optional User ID, generic invalid-credential message, BCrypt password hashes, rate-limited login, short-lived sessions and password rotation.
 
-## Backend configuration
-Copy `backend/.env.example` to a private environment file. Configure PostgreSQL, public API URL, payment gateway key ID/secret and Owner password/TOTP secret. Never commit real secrets.
+Backend compilation has passed in GitHub Actions. See the workflow link in the repository Actions tab.
 
-## Important status
-This repository is an implementation baseline, not a claim that a signed production APK has already passed device testing. A production release requires configured gateway credentials, Firebase credentials if push is enabled, HTTPS deployment, Android SDK/Gradle build, emulator and physical-device tests, and release signing.
+## Critical remaining work before an APK can be called complete
+
+- Android application module and approved UI implementation are not yet in this repository.
+- The approved Parent/Kids/Owner screen design file has not been provided in this conversation/Library; exact UI preservation cannot be implemented without that source.
+- Android Keystore integration, runtime permission flows, notification/accessibility/location handling (only if included in the approved design), and client API wiring.
+- Owner UI, concealed neutral entry, dashboard and password-change screen.
+- Razorpay webhook signature verification and idempotent event processing.
+- Real PostgreSQL deployment, configured plan catalogue, live payment credentials, HTTPS and secret management.
+- Automated migration runner, backend integration/security tests, emulator and physical Android device testing, release signing and APK artifact.
+
+## Security invariants
+
+1. Kids Mode remains free; no Kids login or purchase.
+2. Every Kids installation needs its own Permit and its own successful purchase.
+3. A Permit cannot be reused for another Kids installation.
+4. Client-side payment success, UPI intent returns, screenshots and UTR strings are not proof of payment.
+5. Owner credentials and backend secrets must never be embedded in the APK.
+
+See `docs/FINAL_REQUIREMENTS.md`, `docs/PAIRING_PAYMENT_API.md` and `backend/README.md` for details.
