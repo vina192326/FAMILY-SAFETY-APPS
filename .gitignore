@@ -1,0 +1,10 @@
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
+**/application-local.conf
+**/secrets.properties
+**/google-services.json
+**/keystore.properties
+*.jks
+*.keystore
