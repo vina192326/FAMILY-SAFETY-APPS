@@ -400,7 +400,17 @@ class KidsLocationShareService : Service() {
                     payload.put("latitude", location.latitude)
                     payload.put("longitude", location.longitude)
                     payload.put("accuracyMeters", location.accuracy.toDouble())
-                    api.uploadTelemetry(Instant.now().toString(), payload)
+                    val captured = Instant.now().toString()
+                    api.uploadTelemetry(captured, payload)
+                    api.uploadHistory("LOCATION", captured, JSONObject()
+                        .put("latitude", location.latitude)
+                        .put("longitude", location.longitude)
+                        .put("accuracyMeters", location.accuracy.toDouble())
+                        .put("batteryPercent", payload.opt("batteryPercent"))
+                        .put("networkType", payload.optString("networkType")))
+                    if (payload.has("foregroundAppLabel")) {
+                        api.uploadHistory("APP_USAGE", captured, JSONObject().put("foregroundAppLabel", payload.optString("foregroundAppLabel")))
+                    }
                     api.uploadPermissions(permissionSnapshot(this@KidsLocationShareService))
                 }
             }
