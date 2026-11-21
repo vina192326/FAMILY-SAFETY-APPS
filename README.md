@@ -18,24 +18,24 @@ The backend foundation in `backend/` includes:
 - Owner password-only authentication with optional User ID, generic invalid-credential message, BCrypt password hashes, rate-limited login, short-lived sessions and password rotation.
 - Dynamic history retention foundation: offline retention window, immutable 24-hour timer after first Parent view, and Parent delete controls.
 
-The Android application module now exists in `app/`. It currently contains a Compose Parent navigation shell, no-login Parent device bootstrap, encrypted device token storage, linked-device/history API wiring, and a PDF-before-delete preference API switch. The screens and many controls are still starter/placeholder implementations, not a complete dashboard.
+The Android application module now exists in `app/`. Parent mode currently contains no-login device bootstrap, encrypted token storage, linked-device and history API wiring, OTP validation → plan catalogue → Razorpay order creation, 24h/7d unviewed retention settings, PDF-before-delete preference, a Kids-reported live telemetry viewer with 15-second polling and Maps deep link, a 20-key permission-status viewer, and PDF save/share controls. The server exposes encrypted Kids telemetry and permission snapshot ingestion endpoints. These Parent views do not collect data themselves.
 
 ## Parent Mode — remaining work
 
 See [Parent Mode implementation status](docs/PARENT_MODE_IMPLEMENTATION_STATUS.md) for the detailed screen/control checklist. Major outstanding items include:
 - Exact Stitch UI parity and full Child Profile CRUD.
-- Parent OTP → plan catalogue → Razorpay checkout → verified Permit flow.
+- Complete Razorpay checkout UI → payment verification in Parent app → Permit refresh. (Order creation is wired; checkout/verification UI is not.)
 - Real map/location/safe-place/geofence and Ring/Pause/Locate/Nudge/Check-In commands.
 - Activity charts, app usage, screen-time limits, routines and pause-all controls.
 - Live alert/SOS pipeline, push notifications, severity and quiet-hours controls.
-- PDF/CSV generation, Downloads/Share Sheet and local cache expiry.
+- CSV export and local cache expiry. (PDF save and system Share Sheet are now implemented.)
 - Persisted settings for guardian roles, timezone, routines, notifications, language/theme, permissions, updates, support, export, deletion and AI opt-out.
-- Native permission rationale/request flows and privacy/policy review.
-- Backend APIs, database migrations, push registration/event ingestion, automated tests and end-to-end integration.
+- Kids-side native permission rationale/request flows and consented telemetry upload. Parent permission status only displays snapshots submitted by Kids.
+- Remaining backend APIs, database migrations V006–V008 (retention, permission status, live telemetry), push registration/event ingestion, automated tests and end-to-end integration. Apply V006–V008 before deploying the latest APIs.
 
 ## Build and release status
 
-GitHub Actions is configured to assemble a debug APK and upload it as an artifact. A successful Android build has **not yet been verified** in this audit. The app API base URL is currently a placeholder (`https://api.example.invalid`); no production HTTPS backend, release signing key, release APK or Play-ready package is claimed.
+GitHub Actions is configured to assemble a debug APK and upload it as an artifact. A successful Android or backend build has **not yet been verified** after the latest changes. The app API base URL is configurable through `FAMILY_API_BASE_URL`, but currently falls back to a placeholder (`https://api.example.invalid`); no production HTTPS backend, release signing key, release APK or Play-ready package is claimed.
 
 ## Security invariants
 
