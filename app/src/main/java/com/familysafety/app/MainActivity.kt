@@ -334,7 +334,8 @@ private fun DetailPage(page: String, onBack: () -> Unit, api: ParentApi, selecte
         item { Text(activePage, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Ink) }
         when (activePage) {
             "Child Profile" -> {
-                item { StatusCard("Linked Kids device", "Device ID: $selectedDevice\nUse the linked-device data reported by the Kids app. Permissions are requested on the Kids device.") }
+                item { StatusCard("Linked Kids device", "Device ID: $selectedDevice
+Use the linked-device data reported by the Kids app. Permissions are requested on the Kids device.") }
                 item { Button(onClick = { activePage = "Live Family Data" }) { Text("Open Live Family Data") } }
                 item { OutlinedButton(onClick = { activePage = "Android Permission Health" }) { Text("Open Permission Centre") } }
                 item { OutlinedButton(onClick = { activePage = "History" }) { Text("Open History & Reports") } }
@@ -373,7 +374,13 @@ Key ID: ${order.optString("keyId")}") } }
                 item { telemetry?.let { live ->
                     val payload = runCatching { JSONObject(live.optString("payloadJson")) }.getOrElse { JSONObject() }
                     val captured = live.optString("capturedAt")
-                    StatusCard("Device snapshot", "Captured: $captured\nBattery: ${payload.optString("batteryPercent", "Not reported")}%\nCharging: ${payload.optString("charging", "Not reported")}\nNetwork: ${payload.optString("networkType", "Not reported")}\nForeground app: ${payload.optString("foregroundAppLabel", "Not reported")}\nLatitude: ${payload.optString("latitude", "Not reported")}\nLongitude: ${payload.optString("longitude", "Not reported")}")
+                    StatusCard("Device snapshot", "Captured: $captured
+Battery: ${payload.optString("batteryPercent", "Not reported")}%
+Charging: ${payload.optString("charging", "Not reported")}
+Network: ${payload.optString("networkType", "Not reported")}
+Foreground app: ${payload.optString("foregroundAppLabel", "Not reported")}
+Latitude: ${payload.optString("latitude", "Not reported")}
+Longitude: ${payload.optString("longitude", "Not reported")}")
                 } } }
                 item { StatusCard("Live data source", "This screen displays only the latest encrypted snapshot submitted by the linked Kids app. It does not generate or simulate location or app usage.") }
             }
