@@ -333,6 +333,12 @@ private fun DetailPage(page: String, onBack: () -> Unit, api: ParentApi, selecte
         item { TextButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null); Text(" Back") } }
         item { Text(activePage, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Ink) }
         when (activePage) {
+            "Child Profile" -> {
+                item { StatusCard("Linked Kids device", "Device ID: $selectedDevice\nUse the linked-device data reported by the Kids app. Permissions are requested on the Kids device.") }
+                item { Button(onClick = { activePage = "Live Family Data" }) { Text("Open Live Family Data") } }
+                item { OutlinedButton(onClick = { activePage = "Android Permission Health" }) { Text("Open Permission Centre") } }
+                item { OutlinedButton(onClick = { activePage = "History" }) { Text("Open History & Reports") } }
+            }
             "Pair Device" -> {
                 item { Text("Enter the 6-digit OTP shown in the Kids app. Plans are shown only after server verification.", color = Muted) }
                 item { OutlinedTextField(otp, { otp = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text("Kids OTP") }, singleLine = true) }
