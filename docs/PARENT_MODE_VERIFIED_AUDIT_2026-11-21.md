@@ -109,3 +109,12 @@ Do not implement covert Accessibility click/swipe control, hidden camera/microph
 - Payment SDK checkout, payment verification UI and Permit refresh are incomplete.
 - Alerts/SOS event feed, multi-parent guardians, PDF/CSV export and Sharesheet, automatic PDF generation, complete settings persistence, account deletion/revocation and full safe-wipe workflow remain incomplete.
 - No successful build or emulator/physical-device test has been verified after latest changes. Migrations V006–V008 must be applied before deploying corresponding APIs.
+
+
+## Additional Parent-side work
+
+- History screen now supports saving a PDF into the Android Downloads/FamilySafety folder and sharing that PDF through Android's system Sharesheet. When the PDF-before-delete preference is enabled, loading history attempts to save a local PDF immediately after the server read. PDF export requires Android 10+.
+- Live Family Data now refreshes the latest server snapshot every 15 seconds while the page is open and labels the last Kids report as fresh (≤5 minutes) or stale. Maps opens the last reported GPS coordinates.
+- Telemetry ingestion now allowlists only location, accuracy, battery, charging, network type, foreground app label, screen state and permission-state fields; validates battery and coordinate ranges; rejects unrelated fields.
+
+These changes are source commits only. They have not been verified by a successful CI build or device test. The Kids-side collector remains absent, so live snapshots will not appear until it is implemented.
