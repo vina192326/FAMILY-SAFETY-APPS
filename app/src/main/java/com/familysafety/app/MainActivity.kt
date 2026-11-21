@@ -139,7 +139,7 @@ private fun FamilyParentApp(api: ParentApi) {
                             "Downtime" -> page = "Routines"
                             else -> page = action
                         }
-                    }, onDevice = { id -> selectedDevice = id; page = "Child Profile" })
+                    }, onDevice = { id -> selectedDevice = id; page = "Child Profile" }, onHistory = { id -> selectedDevice = id; page = "History" })
                     tab == Tab.Devices -> DevicesPage(devices, onAction = { page = it; if (it == "Pair Device") selectedDevice = "" })
                     tab == Tab.Activity -> ActivityPage(devices, onOpen = { id -> selectedDevice = id; page = "History" }, onReports = { page = "Reports" })
                     tab == Tab.Alerts -> AlertsPage(onOpen = { page = it })
@@ -157,7 +157,7 @@ private fun FamilyParentApp(api: ParentApi) {
 }
 
 @Composable
-private fun HomePage(info: String, devices: JSONArray, busy: Boolean, onAction: (String) -> Unit, onDevice: (String) -> Unit) {
+private fun HomePage(info: String, devices: JSONArray, busy: Boolean, onAction: (String) -> Unit, onDevice: (String) -> Unit, onHistory: (String) -> Unit) {
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
@@ -174,7 +174,7 @@ private fun HomePage(info: String, devices: JSONArray, busy: Boolean, onAction: 
         }
         items((0 until devices.length()).toList()) { i ->
             val d = devices.optJSONObject(i) ?: JSONObject()
-            ChildCard(d, onOpen = { onDevice(d.optString("kidsDeviceId")) }, onHistory = { onDevice(d.optString("kidsDeviceId")) })
+            ChildCard(d, onOpen = { onDevice(d.optString("kidsDeviceId")) }, onHistory = { onHistory(d.optString("kidsDeviceId")) })
         }
         item { SectionTitle("Parent Controls", "Instant tools") }
         item {
