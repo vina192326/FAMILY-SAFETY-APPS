@@ -55,6 +55,7 @@ private fun FamilyParentApp(api: ParentApi) {
     var error by remember { mutableStateOf<String?>(null) }
     var info by remember { mutableStateOf("Connecting securely…") }
     var pdfPreference by remember { mutableStateOf(false) }
+    var retentionHours by remember { mutableIntStateOf(168) }
     var search by remember { mutableStateOf("") }
     var selectedDevice by remember { mutableStateOf("") }
 
@@ -65,7 +66,9 @@ private fun FamilyParentApp(api: ParentApi) {
             try {
                 deviceId = api.bootstrap()
                 devices = api.devices()
-                pdfPreference = api.getPdfPreference()
+                val prefs = api.historyPreferences()
+                pdfPreference = prefs.optBoolean("savePdfBeforeDelete", false)
+                retentionHours = prefs.optInt("retentionHours", 168)
                 info = if (devices.length() == 0) "No Kids device is linked yet" else "${devices.length()} linked device(s)"
             } catch (e: Exception) {
                 error = e.message ?: "Unable to connect to Family Safety server"
@@ -140,9 +143,12 @@ private fun FamilyParentApp(api: ParentApi) {
                     tab == Tab.Devices -> DevicesPage(devices, onAction = { page = it; if (it == "Pair Device") selectedDevice = "" })
                     tab == Tab.Activity -> ActivityPage(devices, onOpen = { id -> selectedDevice = id; page = "History" }, onReports = { page = "Reports" })
                     tab == Tab.Alerts -> AlertsPage(onOpen = { page = it })
-                    else -> SettingsPage(search, { search = it }, pdfPreference, { enabled ->
+                    else -> SettingsPage(search, { search = it }, pdfPreference, retentionHours, { enabled ->
                         pdfPreference = enabled
-                        scope.launch { runCatching { pdfPreference = api.savePdfPreference(enabled) }.onFailure { error = it.message } }
+                        scope.launch { runCatching { val saved = api.saveHistoryPreferences(enabled, retentionHours); pdfPreference = saved.optBoolean("savePdfBeforeDelete", enabled) }.onFailure { error = it.message } }
+                    }, { hours ->
+                        retentionHours = hours
+                        scope.launch { runCatching { val saved = api.saveHistoryPreferences(pdfPreference, hours); retentionHours = saved.optInt("retentionHours", hours) }.onFailure { error = it.message } }
                     }, onOpen = { page = it })
                 }
             }
@@ -258,7 +264,7 @@ private fun AlertsPage(onOpen: (String) -> Unit) {
 }
 
 @Composable
-private fun SettingsPage(search: String, onSearch: (String) -> Unit, pdf: Boolean, onPdf: (Boolean) -> Unit, onOpen: (String) -> Unit) {
+private fun SettingsPage(search: String, onSearch: (String) -> Unit, pdf: Boolean, retentionHours: Int, onPdf: (Boolean) -> Unit, onRetention: (Int) -> Unit, onOpen: (String) -> Unit) {
     val groups = listOf(
         "Account & Security" to listOf("Parent profile", "Active Sessions", "Security & Privacy"),
         "Family & Guardians" to listOf("Managed Child Profiles", "Guardian Permissions", "Family Timezone"),
@@ -274,7 +280,18 @@ private fun SettingsPage(search: String, onSearch: (String) -> Unit, pdf: Boolea
             if (visible.isNotEmpty()) {
                 item { Text(group.uppercase(), color = Teal, fontWeight = FontWeight.Bold, fontSize = 11.sp) }
                 items(visible) { option ->
-                    if (option == "Save History as PDF Before Auto-Delete") {
+                    if (option == "Data Retention Schedule") {
+                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                            Column(Modifier.fillMaxWidth().padding(14.dp)) {
+                                Text("Unviewed history retention", color = Ink, fontWeight = FontWeight.SemiBold)
+                                Text("Keep data while Parent is offline. First successful view starts the separate 24-hour deletion timer.", color = Muted, fontSize = 11.sp)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    FilterChip(selected = retentionHours == 24, onClick = { onRetention(24) }, label = { Text("24 hours") })
+                                    FilterChip(selected = retentionHours == 168, onClick = { onRetention(168) }, label = { Text("7 days") })
+                                }
+                            }
+                        }
+                    } else if (option == "Save History as PDF Before Auto-Delete") {
                         Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
                             Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
