@@ -58,6 +58,7 @@ private enum class Tab(val label: String) {
 @Composable
 private fun FamilyParentApp(api: ParentApi) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var tab by remember { mutableStateOf(Tab.Home) }
     var page by remember { mutableStateOf("Dashboard") }
     var deviceId by remember { mutableStateOf("") }
@@ -104,7 +105,7 @@ private fun FamilyParentApp(api: ParentApi) {
                             Text("FAMILY SAFETY", color = Teal, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             Text(if (page == "Dashboard") tab.label else page, color = Ink, fontSize = 19.sp, fontWeight = FontWeight.Bold)
                         }
-                        TextButton(onClick = { refresh() }) { Text("EN / HI") }
+                        TextButton(onClick = { context.startActivity(Intent(context, KidsModeActivity::class.java)) }) { Text("Kids Mode") }
                         IconButton(onClick = { tab = Tab.Alerts; page = "Dashboard" }) {
                             Icon(Icons.Default.Notifications, null, tint = Navy)
                         }
