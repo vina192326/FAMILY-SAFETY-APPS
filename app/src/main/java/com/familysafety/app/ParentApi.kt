@@ -85,7 +85,8 @@ class ParentApi(private val context: Context) {
         return response.getString("deviceId")
     }
 
-    suspend fun devices(): JSONArray = JSONArray(request("/v1/parent/devices"))\n
+    suspend fun devices(): JSONArray = JSONArray(request("/v1/parent/devices"))
+
     suspend fun validatePairingOtp(otp: String): JSONObject =
         JSONObject(request("/v1/parent/pairing/validate", "POST", JSONObject().put("otp", otp)))
 
