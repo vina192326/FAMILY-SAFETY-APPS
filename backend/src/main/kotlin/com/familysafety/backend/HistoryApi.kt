@@ -119,7 +119,7 @@ fun Route.historyApiRoutes() {
                     p.setInt(6, retentionHours); p.setBytes(7, encrypted.first); p.setBytes(8, encrypted.second); p.executeUpdate()
                 }
             }
-            call.respond(HttpStatusCode.Accepted, mapOf("status" to "STORED", "recordId" to id.toString(), "offlineRetentionDays" to 7))
+            call.respond(HttpStatusCode.Accepted, mapOf("status" to "STORED", "recordId" to id.toString(), "offlineRetentionHours" to retentionHours))
         }
 
         get("/parent/history") {
@@ -220,6 +220,7 @@ fun Route.historyApiRoutes() {
                 ?: return@put call.familyFail("DEVICE_AUTH_REQUIRED", HttpStatusCode.Unauthorized)
             val req = runCatching { call.receive<HistoryPreferenceRequest>() }.getOrNull()
                 ?: return@put call.familyFail("INVALID_PREFERENCE")
+            if (req.retentionHours !in setOf(24, 168)) return@put call.familyFail("RETENTION_MUST_BE_24_OR_168_HOURS")
             familyDb.connection.use { c ->
                 c.prepareStatement(
                     """INSERT INTO parent_history_preferences(parent_device_id,save_pdf_before_delete,offline_retention_hours)
