@@ -323,7 +323,7 @@ private fun DetailPage(page: String, onBack: () -> Unit, api: ParentApi, selecte
     var planList by remember { mutableStateOf(JSONArray()) }
     var selectedPlanId by remember { mutableStateOf("") }
     var createdOrder by remember { mutableStateOf<JSONObject?>(null) }
-    var records by remember { mutableStateOf(JSONArray()) }
+    var records by remember { mutableStateOf(JSONArray()) }\n    var permissionRows by remember { mutableStateOf(JSONArray()) }
     var loading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("This section is ready for its authenticated service integration.") }
     val scope = rememberCoroutineScope()
@@ -357,7 +357,7 @@ private fun DetailPage(page: String, onBack: () -> Unit, api: ParentApi, selecte
                 item { Text("Gateway order created; no payment is captured or Permit activated yet.", color = Muted) }
                 item { createdOrder?.let { order -> StatusCard("Payment pending", "Order ID: ${order.optString("orderId")}\nGateway order: ${order.optString("gatewayOrderId")}\nAmount: ${order.optLong("amountPaise") / 100.0} ${order.optString("currency")}\nKey ID: ${order.optString("keyId")}") } }
             }
-            "History" -> {
+            "Android Permission Health" -> {\n                item { Button(onClick = { scope.launch { loading = true; runCatching { permissionRows = api.permissionStatus(selectedDevice); message = "Permission snapshot refreshed from Kids device." }.onFailure { message = it.message ?: "Permission status unavailable" }; loading = false } }, enabled = selectedDevice.isNotBlank() && !loading) { Text(if (loading) "Loading…" else "Refresh permission status") } }\n                items((0 until permissionRows.length()).toList()) { i ->\n                    val row = permissionRows.optJSONObject(i) ?: JSONObject()\n                    Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {\n                        Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {\n                            Column(Modifier.weight(1f)) { Text(row.optString("key"), color = Ink, fontWeight = FontWeight.SemiBold); Text(row.optString("detail"), color = Muted, fontSize = 11.sp); Text("Checked: ${row.optString("lastCheckedAt")}", color = Muted, fontSize = 10.sp) }\n                            AssistChip(onClick = {}, label = { Text(if (row.optBoolean("granted")) "Granted" else "Not granted") })\n                        }\n                    }\n                }\n                if (permissionRows.length() == 0) item { StatusCard("No Kids permission report", "The Kids app must request permissions on its own device and submit a status snapshot. Parent cannot silently grant Android permissions.") }\n            }\n            "History" -> {
                 item { Button(onClick = {
                     scope.launch { loading = true; runCatching { records = api.history(selectedDevice); message = "History loaded from server." }.onFailure { message = it.message ?: "History unavailable" }; loading = false }
                 }) { Text(if (loading) "Loading…" else "Load History") } }
