@@ -18,7 +18,7 @@ The backend foundation in `backend/` includes:
 - Owner password-only authentication with optional User ID, generic invalid-credential message, BCrypt password hashes, rate-limited login, short-lived sessions and password rotation.
 - Dynamic history retention foundation: offline retention window, immutable 24-hour timer after first Parent view, and Parent delete controls.
 
-The Android application module now exists in `app/`. Parent mode currently contains no-login device bootstrap, encrypted token storage, linked-device and history API wiring, OTP validation → plan catalogue → Razorpay order creation, 24h/7d unviewed retention settings, PDF-before-delete preference, a Kids-reported live telemetry viewer with 15-second polling and Maps deep link, a 20-key permission-status viewer, and PDF save/share controls. The server exposes encrypted Kids telemetry and permission snapshot ingestion endpoints. These Parent views do not collect data themselves.
+The single Android app module in `app/` now contains separate Parent and Kids screens. Parent mode has no-login device bootstrap, encrypted token storage, linked-device/history APIs, OTP validation → plan catalogue → Razorpay order creation, 24h/7d retention, PDF preference, Kids live telemetry viewer with 15-second polling and Maps deep link, 20-key permission status viewer, and PDF save/share. Kids mode has its own encrypted device token, six-digit OTP generation, one-button 20-step permission/capability wizard, Kids permission snapshot upload, manual sync, and explicit visible foreground live-location sharing that submits telemetry and LOCATION history; optional APP_USAGE history is sent only with Usage Access. Parent remains a viewer/controller; Kids is the data source.
 
 ## Parent Mode — remaining work
 
@@ -46,3 +46,4 @@ GitHub Actions is configured to assemble a debug APK and upload it as an artifac
 5. Owner credentials and backend secrets must never be embedded in the APK.
 
 See `docs/FINAL_REQUIREMENTS.md`, `docs/PAIRING_PAYMENT_API.md` and `backend/README.md` for details.
+\n\nKids Mode detail and permission matrix: `docs/KIDS_MODE_IMPLEMENTATION_STATUS.md`.\n
