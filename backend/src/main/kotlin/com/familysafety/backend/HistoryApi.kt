@@ -99,7 +99,13 @@ fun Route.historyApiRoutes() {
                     p.executeQuery().use { r -> if (r.next()) r.getObject(1, UUID::class.java) else null }
                 }
             } ?: return@post call.familyFail("NO_VALID_BINDING", HttpStatusCode.Forbidden)
-            val retentionHours = familyDb.connection.use { c ->\n                c.prepareStatement("SELECT offline_retention_hours FROM parent_history_preferences WHERE parent_device_id=?").use { p ->\n                    p.setObject(1, parentId); p.executeQuery().use { r -> if (r.next()) r.getInt(1) else 168 }\n                }\n            }\n            val id = UUID.randomUUID()\n            val encrypted = runCatching { encryptHistory(id, req.payloadJson.toByteArray()) }.getOrElse {
+            val retentionHours = familyDb.connection.use { c ->
+                c.prepareStatement("SELECT offline_retention_hours FROM parent_history_preferences WHERE parent_device_id=?").use { p ->
+                    p.setObject(1, parentId); p.executeQuery().use { r -> if (r.next()) r.getInt(1) else 168 }
+                }
+            }
+            val id = UUID.randomUUID()
+            val encrypted = runCatching { encryptHistory(id, req.payloadJson.toByteArray()) }.getOrElse {
                 return@post call.familyFail("HISTORY_ENCRYPTION_UNAVAILABLE", HttpStatusCode.ServiceUnavailable)
             }
             familyDb.connection.use { c ->
@@ -109,7 +115,8 @@ fun Route.historyApiRoutes() {
                        VALUES(?,?,?,?,?,now()+(? * interval '1 hour'),?,?)"""
                 ).use { p ->
                     p.setObject(1, id); p.setObject(2, kidsId); p.setObject(3, parentId)
-                    p.setString(4, req.recordType); p.setObject(5, OffsetDateTime.ofInstant(occurred, ZoneOffset.UTC))\n                    p.setInt(6, retentionHours); p.setBytes(7, encrypted.first); p.setBytes(8, encrypted.second); p.executeUpdate()
+                    p.setString(4, req.recordType); p.setObject(5, OffsetDateTime.ofInstant(occurred, ZoneOffset.UTC))
+                    p.setInt(6, retentionHours); p.setBytes(7, encrypted.first); p.setBytes(8, encrypted.second); p.executeUpdate()
                 }
             }
             call.respond(HttpStatusCode.Accepted, mapOf("status" to "STORED", "recordId" to id.toString(), "offlineRetentionDays" to 7))
@@ -202,7 +209,10 @@ fun Route.historyApiRoutes() {
             val preference = familyDb.connection.use { c ->
                 c.prepareStatement("SELECT save_pdf_before_delete,offline_retention_hours FROM parent_history_preferences WHERE parent_device_id=?").use { p ->
                     p.setObject(1, parentId)
-                    p.executeQuery().use { r -> if (r.next()) r.getBoolean(1) to r.getInt(2) else false to 168 }\n                }\n            }\n            call.respond(HistoryPreferenceResponse(preference.first, preference.second))
+                    p.executeQuery().use { r -> if (r.next()) r.getBoolean(1) to r.getInt(2) else false to 168 }
+                }
+            }
+            call.respond(HistoryPreferenceResponse(preference.first, preference.second))
         }
 
         put("/parent/history/preferences") {
